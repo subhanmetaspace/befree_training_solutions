@@ -5,7 +5,7 @@ const testimonials = [
   {
     name: "Sarah Johnson",
     role: "Web Developer",
-    content: "SkillHub transformed my career! The programming courses are comprehensive and the instructors are incredibly knowledgeable. Highly recommend!",
+    content: "BeFree transformed my career! The programming courses are comprehensive and the instructors are incredibly knowledgeable. Highly recommend!",
     rating: 5,
   },
   {

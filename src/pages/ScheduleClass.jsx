@@ -21,25 +21,25 @@ const ScheduleClass = () => {
   const [user, setUser] = useState({ id: "demo-user" }); // Replace with your auth user info
 
   useEffect(() => {
-    fetchClassDetails();
+    // fetchClassDetails();
   }, [classId]);
 
-  const fetchClassDetails = async () => {
-    try {
-      // Replace with your API endpoint
-      const res = await fetch(`/api/classes/${classId}`);
-      const data = await res.json();
+  // const fetchClassDetails = async () => {
+  //   try {
+  //     // Replace with your API endpoint
+  //     const res = await fetch(`/api/classes/${classId}`);
+  //     const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Failed to load class details");
-      setClassDetails(data);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
+  //     if (!res.ok) throw new Error(data.message || "Failed to load class details");
+  //     setClassDetails(data);
+  //   } catch (error) {
+  //     toast({
+  //       title: "Error",
+  //       description: error.message,
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
   const timeSlots = [
     "09:00", "10:00", "11:00", "12:00",
@@ -65,15 +65,7 @@ const ScheduleClass = () => {
       scheduledDateTime.setHours(parseInt(hours), parseInt(minutes));
 
       // Replace with your API endpoint
-      const res = await fetch("/api/schedule-class", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: user.id,
-          class_id: classId,
-          scheduled_at: scheduledDateTime.toISOString(),
-        }),
-      });
+      let res;
 
       const data = await res.json();
       setLoading(false);

@@ -102,7 +102,7 @@ const PrivacyPolicy = () => {
                   </h2>
                   <p>
                     If you have any questions about this Privacy Policy, please
-                    contact us at privacy@skillhub.com
+                    contact us at privacy@befree.com
                   </p>
                 </section>
               </div>

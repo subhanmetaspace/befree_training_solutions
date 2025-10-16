@@ -34,7 +34,7 @@ const About = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center mb-16 animate-fade-in">
               <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-                About SkillHub
+                About BeFree
               </h1>
               <p className="text-lg text-muted-foreground">
                 We're on a mission to make quality education accessible to everyone, everywhere.
@@ -46,7 +46,7 @@ const About = () => {
               <div className="bg-gradient-card rounded-lg p-8 border border-border">
                 <h2 className="text-2xl font-bold text-foreground mb-4">Our Story</h2>
                 <p className="text-muted-foreground">
-                  Founded in 2025, SkillHub started with a simple idea: everyone deserves access
+                  Founded in 2025, BeFree started with a simple idea: everyone deserves access
                   to world-class education. Today, we're proud to serve thousands of students
                   worldwide, offering courses across various disciplines.
                 </p>

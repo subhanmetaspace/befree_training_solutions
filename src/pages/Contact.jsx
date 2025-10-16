@@ -7,7 +7,8 @@ import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { Card, CardContent } from "../components/ui/card";
 import { useToast } from "../hooks/use-toast";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Loader2 } from "lucide-react";
+import axios from "axios";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -16,15 +17,45 @@ const Contact = () => {
     subject: "",
     message: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    toast({
-      title: "Message sent!",
-      description: "We'll get back to you as soon as possible.",
-    });
-    setFormData({ name: "", email: "", subject: "", message: "" });
+    setLoading(true);
+
+    try {
+      // API call
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_BACKEND}/support/contact`,
+        formData
+      );
+
+      if (response.data.success) {
+        toast({
+          title: "Message sent!",
+          description: "We'll get back to you as soon as possible.",
+        });
+        setSubmitted(true);
+        setFormData({ name: "", email: "", subject: "", message: "" });
+      } else {
+        toast({
+          title: "Error",
+          description: response.data.message || "Something went wrong.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting contact form:", error);
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,7 +69,8 @@ const Contact = () => {
                 Get in Touch
               </h1>
               <p className="text-lg text-muted-foreground">
-                Have a question? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+                Have a question? We'd love to hear from you. Send us a message
+                and we'll respond as soon as possible.
               </p>
             </div>
 
@@ -46,49 +78,88 @@ const Contact = () => {
               <div className="lg:col-span-2">
                 <Card>
                   <CardContent className="p-6">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      <div className="grid md:grid-cols-2 gap-4">
+                    {!submitted ? (
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="name">Name</Label>
+                            <Input
+                              id="name"
+                              value={formData.name}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  name: e.target.value,
+                                })
+                              }
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                              id="email"
+                              type="email"
+                              value={formData.email}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  email: e.target.value,
+                                })
+                              }
+                              required
+                            />
+                          </div>
+                        </div>
                         <div className="space-y-2">
-                          <Label htmlFor="name">Name</Label>
+                          <Label htmlFor="subject">Subject</Label>
                           <Input
-                            id="name"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            id="subject"
+                            value={formData.subject}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                subject: e.target.value,
+                              })
+                            }
                             required
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          <Label htmlFor="message">Message</Label>
+                          <Textarea
+                            id="message"
+                            rows={6}
+                            value={formData.message}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                message: e.target.value,
+                              })
+                            }
                             required
                           />
                         </div>
+                        <Button
+                          type="submit"
+                          className="w-full flex justify-center items-center gap-2"
+                          disabled={loading}
+                        >
+                          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                          Send Message
+                        </Button>
+                      </form>
+                    ) : (
+                      <div className="text-center py-12 bg-green-100 rounded-lg">
+                        <h2 className="text-2xl font-semibold text-green-700 mb-2">
+                          Thank you!
+                        </h2>
+                        <p className="text-green-700">
+                          We received your message and will get back to you
+                          shortly.
+                        </p>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="subject">Subject</Label>
-                        <Input
-                          id="subject"
-                          value={formData.subject}
-                          onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="message">Message</Label>
-                        <Textarea
-                          id="message"
-                          rows={6}
-                          value={formData.message}
-                          onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <Button type="submit" className="w-full">Send Message</Button>
-                    </form>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -101,8 +172,12 @@ const Contact = () => {
                         <Mail className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground mb-1">Email</h3>
-                        <p className="text-sm text-muted-foreground">support@skillhub.com</p>
+                        <h3 className="font-semibold text-foreground mb-1">
+                          Email
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          support@befree.com
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
@@ -110,8 +185,12 @@ const Contact = () => {
                         <Phone className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground mb-1">Phone</h3>
-                        <p className="text-sm text-muted-foreground">+1 (555) 123-4567</p>
+                        <h3 className="font-semibold text-foreground mb-1">
+                          Phone
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          +971 50 231 7221
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-4">
@@ -119,10 +198,13 @@ const Contact = () => {
                         <MapPin className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground mb-1">Office</h3>
+                        <h3 className="font-semibold text-foreground mb-1">
+                          Office
+                        </h3>
                         <p className="text-sm text-muted-foreground">
-                          123 Learning Street<br />
-                          Education City, EC 12345
+                          Sharjah Media City
+                          <br />
+                          Sharjah, UAE
                         </p>
                       </div>
                     </div>

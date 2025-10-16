@@ -4,6 +4,13 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/toaster";
 import { Toaster as Sonner } from "./components/ui/sonner";
+import { AuthProvider } from "./context/AuthContext";
+import ProfilePage from "./pages/ProfilePage";
+import ClassesPage from "./pages/ClassesPage";
+import TeachersPage from "./pages/TeachersPage";
+import PlansPage from "./pages/PlansPage";
+import Checkout from "./pages/Checkout";
+import PaymentPage from "./pages/PaymentPage";
 
 // Lazy-loaded pages
 const Index = lazy(() => import("./pages/Index"));
@@ -22,7 +29,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <AuthProvider>
+    <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <BrowserRouter>
         {/* Notifications */}
@@ -43,7 +51,12 @@ const App = () => (
             <Route path="/cookie-policy" element={<CookiePolicy />} />
             <Route path="/schedule-class/:classId" element={<ScheduleClass />} />
             <Route path="/my-classes" element={<MyClasses />} />
-
+            <Route path="/classes" element={<ClassesPage/>} />
+            <Route path="/teachers" element={<TeachersPage/>} />
+            <Route path="/checkout" element={<Checkout/>} />
+            <Route path="/payment" element={<PaymentPage/>} />
+            <Route path="/plans" element={<PlansPage/>} />
+            <Route path="/profile" element={<ProfilePage/>} />
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -51,6 +64,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+  </AuthProvider>
 );
 
 export default App;

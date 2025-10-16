@@ -1,8 +1,10 @@
 import { Button } from "../components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
 import heroImage from "../assets/hero-learning.jpg";
+import { useNavigate } from "react-router";
 
 const Hero = () => {
+  const navigate = useNavigate();
   return (
     <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-hero opacity-5"></div>
@@ -24,7 +26,7 @@ const Hero = () => {
             </p>
             
             <div className="flex flex-wrap gap-4">
-              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground group">
+              <Button style={{cursor:"pointer"}} onClick = {()=>navigate("/classes")} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground group">
                 Start Learning Today
                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>

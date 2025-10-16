@@ -10,7 +10,7 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-lg bg-gradient-hero flex items-center justify-center">
                 <BookOpen className="w-6 h-6 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">SkillHub</span>
+              <span className="text-xl font-bold text-foreground">BeFree Training Solutions</span>
             </div>
             <p className="text-muted-foreground text-sm">
               Empowering learners of all ages to master new skills and achieve their goals.
@@ -21,22 +21,17 @@ const Footer = () => {
             <h4 className="font-semibold text-foreground mb-4">Platform</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/#classes" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="/classes" className="text-muted-foreground hover:text-foreground transition-colors">
                   Classes
                 </a>
               </li>
               <li>
-                <a href="/#teachers" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="/teachers" className="text-muted-foreground hover:text-foreground transition-colors">
                   Teachers
                 </a>
               </li>
               <li>
-                <a href="/my-classes" className="text-muted-foreground hover:text-foreground transition-colors">
-                  My Classes
-                </a>
-              </li>
-              <li>
-                <a href="/#plans" className="text-muted-foreground hover:text-foreground transition-colors">
+                <a href="/plans" className="text-muted-foreground hover:text-foreground transition-colors">
                   Pricing
                 </a>
               </li>
@@ -87,7 +82,7 @@ const Footer = () => {
         </div>
 
         <div className="pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>© 2025 SkillHub. All rights reserved. Built with passion for learners worldwide.</p>
+          <p>© 2025 BeFree Training. All rights reserved. Built with passion for learners worldwide.</p>
         </div>
       </div>
     </footer>

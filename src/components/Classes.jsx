@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { Download, Video, Calendar, Clock } from "lucide-react";
+import { Download, Video, Calendar, Clock, Star } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -12,7 +12,7 @@ const Classes = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
-
+  const [enrollClassModal,setEnrollClassModal] = useState(false);
   useEffect(() => {
     fetchClasses();
   }, []);
@@ -20,28 +20,73 @@ const Classes = () => {
   const fetchClasses = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with your API call
-      // Example:
-      // const response = await fetch("/api/classes");
-      // const data = await response.json();
+      // Replace this sample data with your API call
       const data = [
-        // sample data structure
         {
           id: 1,
-          title: "Sample Live Class",
-          description: "Learn something amazing",
+          title: "Beginner Photography",
+          description: "Learn the basics of photography with hands-on examples.",
           duration_minutes: 60,
           type: "live",
-          price: 20,
+          price: 100,
+          plan_required: "Starter",
         },
         {
           id: 2,
-          title: "Sample Downloadable Class",
-          description: "Download and learn",
-          duration_minutes: 45,
+          title: "Advanced Photoshop Techniques",
+          description: "Enhance your editing skills with advanced Photoshop tools.",
+          duration_minutes: 90,
+          type: "live",
+          price: 500,
+          plan_required: "Professional",
+        },
+        {
+          id: 3,
+          title: "Creative Writing Essentials",
+          description: "Master storytelling and improve your writing style.",
+          duration_minutes: 75,
+          type: "live",
+          price: 100,
+          plan_required: "Starter",
+        },
+        {
+          id: 4,
+          title: "Data Analytics for Business",
+          description: "Learn how to analyze business data using Excel and Power BI.",
+          duration_minutes: 120,
+          type: "live",
+          price: 1500,
+          plan_required: "Enterprise",
+        },
+        {
+          id: 5,
+          title: "Web Development Basics",
+          description: "HTML, CSS, and JS fundamentals to build your first website.",
+          duration_minutes: 80,
           type: "download",
-          price: 10,
+          price: 100,
           download_url: "#",
+          plan_required: "Starter",
+        },
+        {
+          id: 6,
+          title: "Full-Stack Web Development",
+          description: "Advanced projects with React, Node.js, and MongoDB.",
+          duration_minutes: 180,
+          type: "download",
+          price: 500,
+          download_url: "#",
+          plan_required: "Professional",
+        },
+        {
+          id: 7,
+          title: "Machine Learning Crash Course",
+          description: "Hands-on ML projects using Python and scikit-learn.",
+          duration_minutes: 200,
+          type: "download",
+          price: 1500,
+          download_url: "#",
+          plan_required: "Enterprise",
         },
       ];
 
@@ -78,7 +123,7 @@ const Classes = () => {
             Explore Our Classes
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Choose from downloadable content or join live interactive sessions with expert instructors
+            Choose from downloadable content or join live interactive sessions with expert instructors. Premium classes are available for higher-tier plans.
           </p>
         </div>
 
@@ -102,12 +147,15 @@ const Classes = () => {
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {liveClasses.map((classItem) => (
-                  <Card key={classItem.id} className="hover:shadow-hover transition-all">
+                  <Card key={classItem.id} className="hover:shadow-hover transition-all relative">
+                    {classItem.plan_required !== "Starter" && (
+                      <Badge className="absolute top-2 right-2 bg-primary text-white">
+                        {classItem.plan_required} Only
+                      </Badge>
+                    )}
                     <CardHeader>
                       <CardTitle className="line-clamp-2">{classItem.title}</CardTitle>
-                      <CardDescription className="line-clamp-2">
-                        {classItem.description}
-                      </CardDescription>
+                      <CardDescription className="line-clamp-2">{classItem.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -115,7 +163,7 @@ const Classes = () => {
                           <Clock className="w-4 h-4" />
                           {classItem.duration_minutes || 60} min
                         </div>
-                        {classItem.price && <Badge variant="secondary">${classItem.price}</Badge>}
+                        {classItem.price && <Badge variant="secondary">AED {classItem.price}</Badge>}
                       </div>
                       <Button
                         onClick={() => scheduleClass(classItem.id)}
@@ -139,12 +187,15 @@ const Classes = () => {
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {downloadClasses.map((classItem) => (
-                  <Card key={classItem.id} className="hover:shadow-hover transition-all">
+                  <Card key={classItem.id} className="hover:shadow-hover transition-all relative">
+                    {classItem.plan_required !== "Starter" && (
+                      <Badge className="absolute top-2 right-2 bg-primary text-white">
+                        {classItem.plan_required} Only
+                      </Badge>
+                    )}
                     <CardHeader>
                       <CardTitle className="line-clamp-2">{classItem.title}</CardTitle>
-                      <CardDescription className="line-clamp-2">
-                        {classItem.description}
-                      </CardDescription>
+                      <CardDescription className="line-clamp-2">{classItem.description}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -152,7 +203,7 @@ const Classes = () => {
                           <Clock className="w-4 h-4" />
                           {classItem.duration_minutes || 60} min
                         </div>
-                        {classItem.price && <Badge variant="secondary">${classItem.price}</Badge>}
+                        {classItem.price && <Badge variant="secondary">AED {classItem.price}</Badge>}
                       </div>
                       <Button
                         onClick={() => downloadClass(classItem.download_url)}
@@ -170,6 +221,7 @@ const Classes = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
     </section>
   );
 };
