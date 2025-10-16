@@ -15,6 +15,7 @@ app.use(
     origin: (origin, callback) => {
       const allowedOrigins = [
         "https://makerbatech.com",
+        "https://befreetraining.net",
         "http://localhost:3000"
       ];
       if (!origin || allowedOrigins.includes(origin)) {
