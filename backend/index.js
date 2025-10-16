@@ -14,7 +14,6 @@ app.use(
   cors({
     origin: (origin, callback) => {
       const allowedOrigins = [
-        "https://makerbatech.com",
         "https://befreetraining.net",
         "http://localhost:3000"
       ];

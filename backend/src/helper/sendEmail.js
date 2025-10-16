@@ -15,7 +15,7 @@
 // const sendEmail = async (to,subject,html)=>{
 //     try{
 //         await transporter.sendMail({
-//             from:`"Makerba Support" <${process.env.SMTP_EMAIL||process.env.SMTP_USER}>`,
+//             from:`"BeFree Support" <${process.env.SMTP_EMAIL||process.env.SMTP_USER}>`,
 //             to:to,
 //             subject:subject,
 //             html:html
@@ -47,7 +47,7 @@ const transporter = nodemailer.createTransport({
 const sendEmail = async (to, subject, html) => {
     try {
         await transporter.sendMail({
-            from: `"Makerba Support" <${GMAIL_USER}>`, // sender address
+            from: `"BeFree Training Support" <${GMAIL_USER}>`, // sender address
             to: to,                                     // recipient
             subject: subject,
             html: html,                                 // html body

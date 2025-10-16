@@ -53,12 +53,12 @@ const resetPasswordSchema = Joi.object({
 
 const sendOtpMail = async (user, otp) => {
   const html = otpTemplate(otp);
-  await sendEmail(user.email, "Makerba OTP Verification", html);
+  await sendEmail(user.email, "BeFree OTP Verification", html);
 };
 
 const sendRegisterationMail = async (user) => {
   const html = registerTemplate(user.full_name);
-  await sendEmail(user.email, "Welcome to Makerba!", html);
+  await sendEmail(user.email, "Welcome to BeFree Training Solutions!", html);
 };
 
 const sendVerificationSuccessMail = async (user) => {
@@ -112,7 +112,7 @@ userRouter.post("/register", async (req, res) => {
 
     await sendNotification({
   user_id: user.id,
-  title: "Welcome to Makerba!",
+  title: "Welcome to BeFree Training Solutions!",
   description: "You have successfully registered. Please verify your email to continue.",
   type: "achievement",
 });
@@ -122,7 +122,7 @@ userRouter.post("/register", async (req, res) => {
       .status(200)
       .json({
         success: true,
-        message: "Registered at Makerba, Please check your email for OTP!",
+        message: "Registered at BeFree, Please check your email for OTP!",
       });
   } catch (err) {
     console.error(err);
