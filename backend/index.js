@@ -36,8 +36,8 @@ app.use("/api/v1/plans",planRouter)
 app.use("/api/v1/notifications",notificationRouter)
 
 app.get("/", (req, res) => {
-  console.log("web hosting API running");
-  res.send("Web hosting API running");
+  console.log("befree API running");
+  res.send("befree API running");
 });
 
 const startServer = async () => {
