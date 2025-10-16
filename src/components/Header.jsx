@@ -157,14 +157,14 @@ const Header = () => {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden mt-2 pb-4 border-t border-border flex flex-col gap-2">
-            <a href="#classes" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Classes</a>
-            <a href="#teachers" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Teachers</a>
-            <a href="#plans" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Plans</a>
+            <a href="/classes" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Classes</a>
+            <a href="/teachers" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Teachers</a>
+            <a href="/plans" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Plans</a>
             <a href="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">About</a>
             <a href="/help-center" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Help</a>
             <div className="flex flex-col gap-2 mt-2">
-              <Button variant="ghost" size="sm">Sign In</Button>
-              <Button size="sm" className="bg-accent hover:bg-accent/90">Get Started</Button>
+              {token ? <><Button onClick={() => navigate("/profile")} size="sm" className="bg-accent hover:bg-accent/90">Dashboard</Button></>:<><Button onClick={() => navigate("/auth")} variant="ghost" size="sm">Sign In</Button>
+              <Button onClick={() => navigate("/auth")} size="sm" className="bg-accent hover:bg-accent/90">Get Started</Button></>}
             </div>
           </div>
         )}
