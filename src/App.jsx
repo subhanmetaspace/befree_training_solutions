@@ -24,6 +24,8 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
 const ScheduleClass = lazy(() => import("./pages/ScheduleClass"));
 const MyClasses = lazy(() => import("./pages/MyClasses"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const PaymentCancel = lazy(() => import("./pages/PaymentCancel"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -55,6 +57,8 @@ const App = () => (
             <Route path="/teachers" element={<TeachersPage/>} />
             <Route path="/checkout" element={<Checkout/>} />
             <Route path="/payment" element={<PaymentPage/>} />
+            <Route path="/payment-success" element={<PaymentSuccess/>} />
+            <Route path="/payment-cancel" element={<PaymentCancel/>} />
             <Route path="/plans" element={<PlansPage/>} />
             <Route path="/profile" element={<ProfilePage/>} />
             {/* Catch-all */}
