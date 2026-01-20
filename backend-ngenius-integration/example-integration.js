@@ -1,8 +1,7 @@
 /**
- * Example Integration
+ * Example Integration (MySQL Version)
  * 
  * This shows how to integrate the N-Genius orders routes into your existing Express app.
- * Copy the relevant parts to your main server file.
  */
 
 const express = require('express');
@@ -16,6 +15,7 @@ app.use(cors({
   origin: [
     'https://7125bce4-753c-4e16-b02e-d5bbd340eda3-00-2ojlk0ircnnqe.pike.replit.dev',
     'http://localhost:5000',
+    'http://localhost:3000',
     process.env.FRONTEND_URL
   ].filter(Boolean),
   credentials: true

@@ -1,5 +1,5 @@
 /**
- * Orders Routes
+ * Orders Routes (No Webhook Version)
  * BeFree EdTech Platform
  */
 
@@ -9,22 +9,16 @@ const ordersController = require('../controllers/orders.controller');
 
 // Middleware for authentication (optional - adjust based on your auth setup)
 const authMiddleware = (req, res, next) => {
-  // Extract token from Authorization header
   const authHeader = req.headers.authorization;
   
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
     
     // TODO: Verify JWT token and attach user to request
-    // This is a placeholder - implement your actual JWT verification
-    try {
-      // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      // req.user = decoded;
-      req.user = { id: null }; // Placeholder
-    } catch (err) {
-      // Token invalid but allow request to continue (order can be guest checkout)
-      req.user = null;
-    }
+    // Example:
+    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // req.user = decoded;
+    req.user = { id: null }; // Placeholder
   } else {
     req.user = null;
   }
@@ -32,7 +26,7 @@ const authMiddleware = (req, res, next) => {
   next();
 };
 
-// Require authentication middleware
+// Require authentication
 const requireAuth = (req, res, next) => {
   if (!req.user?.id) {
     return res.status(401).json({
@@ -60,29 +54,22 @@ router.get('/my-orders', authMiddleware, requireAuth, ordersController.getMyOrde
 /**
  * @route   GET /api/v1/orders/:id
  * @desc    Get order by ID
- * @access  Public (should add ownership check in production)
+ * @access  Public
  */
 router.get('/:id', ordersController.getOrder);
 
 /**
- * @route   GET /api/v1/orders/:id/status
- * @desc    Get order status (syncs with N-Genius)
+ * @route   GET /api/v1/orders/:id/verify
+ * @desc    Verify payment status (call this when user returns from payment)
  * @access  Public
  */
-router.get('/:id/status', ordersController.getOrderStatus);
+router.get('/:id/verify', ordersController.verifyPayment);
 
 /**
  * @route   POST /api/v1/orders/:id/refund
  * @desc    Process refund for an order
- * @access  Private (Admin only in production)
+ * @access  Private (Admin only)
  */
 router.post('/:id/refund', authMiddleware, requireAuth, ordersController.refundOrder);
-
-/**
- * @route   POST /api/v1/orders/webhook
- * @desc    N-Genius webhook handler
- * @access  Public (verify signature in production)
- */
-router.post('/webhook', express.json(), ordersController.handleWebhook);
 
 module.exports = router;

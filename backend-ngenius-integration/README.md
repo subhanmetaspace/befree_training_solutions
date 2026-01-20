@@ -1,13 +1,14 @@
-# N-Genius Payment Gateway Integration
+# N-Genius Payment Gateway Integration (MySQL - No Webhook)
 
 Complete backend integration for N-Genius payment gateway for the BeFree EdTech Platform.
+Uses payment verification on redirect instead of webhooks.
 
 ## Quick Start
 
 ### 1. Install Dependencies
 
 ```bash
-npm install express pg axios uuid dotenv cors
+npm install express mysql2 axios uuid dotenv cors
 ```
 
 ### 2. Environment Variables
@@ -15,8 +16,11 @@ npm install express pg axios uuid dotenv cors
 Add these to your `.env` file:
 
 ```env
-# Database
-DATABASE_URL=postgresql://user:password@host:5432/database
+# Database (MySQL)
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=edtech
 
 # N-Genius Configuration
 NGENIUS_ENV=sandbox                          # 'sandbox' or 'production'
@@ -27,19 +31,14 @@ NGENIUS_CURRENCY=AED                         # Default currency
 
 # Redirect URLs
 FRONTEND_URL=https://your-frontend-domain.com
-NGENIUS_REDIRECT_URL=https://your-frontend-domain.com/payment-success
-NGENIUS_CANCEL_URL=https://your-frontend-domain.com/payment-cancel
-
-# JWT (for authentication)
-JWT_SECRET=your-jwt-secret-key
 ```
 
 ### 3. Run Database Migration
 
-Execute the SQL in `database/schema.sql` to create the required tables:
+Execute the SQL in `database/schema.sql`:
 
 ```bash
-psql $DATABASE_URL -f database/schema.sql
+mysql -u root -p edtech < database/schema.sql
 ```
 
 ### 4. Integrate Routes
@@ -62,7 +61,7 @@ Authorization: Bearer <token> (optional)
 Request Body:
 {
   "planId": "Professional",
-  "billing": "month",  // or "year"
+  "billing": "month",
   "quantity": 1,
   "contactInfo": {
     "firstName": "John",
@@ -71,13 +70,9 @@ Request Body:
     "phone": "+971501234567",
     "country": "United Arab Emirates",
     "address1": "123 Main Street",
-    "address2": "Apt 4B",
-    "city": "Dubai",
-    "state": "Dubai",
-    "zip": "00000"
+    "city": "Dubai"
   },
-  "paymentMethod": "card",
-  "billingAddress": { /* same structure as contactInfo */ }
+  "paymentMethod": "card"
 }
 
 Response:
@@ -85,8 +80,6 @@ Response:
   "success": true,
   "data": {
     "id": "uuid",
-    "merchantOrderReference": "BF-1234567890-ABCD1234",
-    "ngeniusOrderRef": "urn:order:xxx",
     "paymentUrl": "https://payment.ngenius-payments.com/...",
     "amount": 500,
     "currency": "AED"
@@ -94,22 +87,10 @@ Response:
 }
 ```
 
-### Get Order
+### Verify Payment (Call on redirect)
 
 ```
-GET /api/v1/orders/:id
-
-Response:
-{
-  "success": true,
-  "data": { /* order object */ }
-}
-```
-
-### Check Order Status
-
-```
-GET /api/v1/orders/:id/status
+GET /api/v1/orders/:id/verify
 
 Response:
 {
@@ -126,17 +107,17 @@ Response:
 }
 ```
 
+### Get Order
+
+```
+GET /api/v1/orders/:id
+```
+
 ### Get My Orders (Authenticated)
 
 ```
 GET /api/v1/orders/my-orders
 Authorization: Bearer <token>
-
-Response:
-{
-  "success": true,
-  "data": [ /* array of orders */ ]
-}
 ```
 
 ### Process Refund
@@ -149,46 +130,9 @@ Request Body (optional for partial refund):
 {
   "amount": 100
 }
-
-Response:
-{
-  "success": true,
-  "data": {
-    "orderId": "uuid",
-    "refundRef": "urn:refund:xxx",
-    "status": "refunded",
-    "amount": 500
-  }
-}
 ```
 
-### Webhook Handler
-
-```
-POST /api/v1/orders/webhook
-Content-Type: application/json
-
-(Payload sent by N-Genius)
-```
-
-## N-Genius Portal Setup
-
-1. **Get API Key**: Settings → Integrations → Service Accounts → Create new
-2. **Get Outlet Reference**: Settings → Outlets → Copy UUID
-3. **Set Webhook URL**: Settings → Webhooks → Add `https://your-backend.com/api/v1/orders/webhook`
-
-## Test Card Numbers (Sandbox)
-
-| Card Number | Description |
-|-------------|-------------|
-| 4012001037141112 | Successful payment |
-| 5123450000000008 | 3DS Challenge |
-| 4000300011112220 | Declined |
-
-- **Expiry**: Any future date (e.g., 12/28)
-- **CVV**: Any 3 digits (e.g., 123)
-
-## Payment Flow
+## Payment Flow (No Webhook)
 
 1. Frontend calls `POST /api/v1/orders` with plan and contact info
 2. Backend creates order in database
@@ -196,15 +140,24 @@ Content-Type: application/json
 4. Backend returns `paymentUrl` to frontend
 5. Frontend redirects user to N-Genius hosted payment page
 6. User completes payment on N-Genius page
-7. N-Genius redirects user back to `redirectUrl` with result
-8. N-Genius sends webhook to `/api/v1/orders/webhook`
-9. Backend updates order status
-10. Frontend shows success/failure based on order status
+7. N-Genius redirects user back to `/payment-success?orderId=xxx`
+8. Frontend calls `GET /api/v1/orders/:id/verify` to check payment status
+9. Backend queries N-Genius API and updates order status
+10. Frontend shows success/failure based on verified status
 
-## Security Notes
+## Test Card Numbers (Sandbox)
 
-- Never log or store raw card numbers
-- Validate webhook signatures in production
-- Use HTTPS for all API calls
-- Store N-Genius API key securely (environment variable)
-- Implement rate limiting for payment endpoints
+| Card Number | Result |
+|-------------|--------|
+| 4012001037141112 | Successful payment |
+| 5123450000000008 | 3DS Challenge |
+| 4000300011112220 | Declined |
+
+- **Expiry**: Any future date (e.g., 12/28)
+- **CVV**: Any 3 digits (e.g., 123)
+
+## N-Genius Portal Setup
+
+1. **Get API Key**: Settings → Integrations → Service Accounts → Create new
+2. **Get Outlet Reference**: Settings → Outlets → Copy UUID
+3. Base64 encode your API key if not already encoded

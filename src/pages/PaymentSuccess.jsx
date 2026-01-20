@@ -30,7 +30,7 @@ const PaymentSuccess = () => {
       }
 
       try {
-        const res = await axios.get(`${API_BASE}/orders/${orderId}/status`);
+        const res = await axios.get(`${API_BASE}/orders/${orderId}/verify`);
         if (res.data?.success) {
           setOrder(res.data.data);
         }

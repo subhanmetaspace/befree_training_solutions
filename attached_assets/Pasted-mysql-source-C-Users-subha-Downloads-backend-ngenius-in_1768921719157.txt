@@ -1,0 +1,26 @@
+mysql> source C:\Users\subha\Downloads\backend-ngenius-integration\backend-ngenius-integration\database\schema.sql
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id' at line 2
+ERROR 1146 (42S02): Table 'edtech.orders' doesn't exist
+ERROR 1146 (42S02): Table 'edtech.orders' doesn't exist
+ERROR 1146 (42S02): Table 'edtech.orders' doesn't exist
+ERROR 1146 (42S02): Table 'edtech.orders' doesn't exist
+ERROR 1146 (42S02): Table 'edtech.orders' doesn't exist
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID REFERENCES orders(' at line 2
+ERROR 1146 (42S02): Table 'edtech.payment_transactions' doesn't exist
+ERROR 1146 (42S02): Table 'edtech.payment_transactions' doesn't exist
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    source VARCHAR(50) DEFAULT 'ngen' at line 2
+ERROR 1146 (42S02): Table 'edtech.webhook_logs' doesn't exist
+ERROR 1146 (42S02): Table 'edtech.webhook_logs' doesn't exist
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_' at line 1
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'RETURN NEW' at line 1
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'END' at line 1
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '$$ language 'plpgsql'' at line 1
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'FUNCTION update_updated_at_column()' at line 4
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'FUNCTION update_updated_at_column()' at line 4
+mysql>

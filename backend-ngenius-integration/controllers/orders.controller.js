@@ -1,18 +1,23 @@
 /**
- * Orders Controller
+ * Orders Controller (MySQL Version - No Webhook)
  * BeFree EdTech Platform
  * 
- * Handles order creation and payment processing with N-Genius
+ * Payment is verified when user returns to success/cancel page
  */
 
-const { Pool } = require('pg');
+const mysql = require('mysql2/promise');
 const ngeniusService = require('../services/ngenius.service');
 const { v4: uuidv4 } = require('uuid');
 
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+// Database connection pool
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME || 'edtech',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 /**
@@ -20,7 +25,7 @@ const pool = new Pool({
  * POST /api/v1/orders
  */
 const createOrder = async (req, res) => {
-  const client = await pool.connect();
+  const connection = await pool.getConnection();
   
   try {
     const {
@@ -29,7 +34,6 @@ const createOrder = async (req, res) => {
       quantity,
       contactInfo,
       paymentMethod,
-      cardInfo,
       billingAddress
     } = req.body;
 
@@ -45,19 +49,19 @@ const createOrder = async (req, res) => {
     }
 
     // Fetch plan details from database
-    const planResult = await client.query(
-      'SELECT * FROM plans WHERE id = $1 OR name = $1',
-      [planId]
+    const [plans] = await connection.execute(
+      'SELECT * FROM plans WHERE id = ? OR name = ?',
+      [planId, planId]
     );
 
-    if (planResult.rows.length === 0) {
+    if (plans.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Plan not found'
       });
     }
 
-    const plan = planResult.rows[0];
+    const plan = plans[0];
     
     // Calculate pricing
     const basePrice = parseFloat(plan.price) || 0;
@@ -75,20 +79,21 @@ const createOrder = async (req, res) => {
       totalAmount = basePrice * qty;
     }
 
-    // Generate merchant order reference
-    const merchantOrderRef = `BF-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`;
+    // Generate IDs
+    const orderId = uuidv4();
+    const merchantOrderRef = `BF-${Date.now()}-${orderId.slice(0, 8).toUpperCase()}`;
 
     // Create order in database
-    const orderResult = await client.query(`
+    await connection.execute(`
       INSERT INTO orders (
-        user_id, plan_id, plan_name, billing_cycle, quantity,
+        id, user_id, plan_id, plan_name, billing_cycle, quantity,
         base_price, discount_amount, total_amount, currency,
         first_name, last_name, email, phone,
         country, address_line1, address_line2, city, state, postal_code,
         payment_method, merchant_order_reference, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
-      RETURNING *
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
+      orderId,
       userId,
       plan.id || plan.name,
       plan.name,
@@ -113,8 +118,6 @@ const createOrder = async (req, res) => {
       'pending'
     ]);
 
-    const order = orderResult.rows[0];
-
     // Create N-Genius payment order
     const ngeniusOrder = await ngeniusService.createOrder({
       amount: totalAmount,
@@ -130,22 +133,22 @@ const createOrder = async (req, res) => {
       city: billingAddress?.city || contactInfo.city,
       state: billingAddress?.state || contactInfo.state,
       postalCode: billingAddress?.zip || contactInfo.zip,
-      redirectUrl: `${process.env.FRONTEND_URL}/payment-success?orderId=${order.id}`,
-      cancelUrl: `${process.env.FRONTEND_URL}/payment-cancel?orderId=${order.id}`
+      redirectUrl: `${process.env.FRONTEND_URL}/payment-success?orderId=${orderId}`,
+      cancelUrl: `${process.env.FRONTEND_URL}/payment-cancel?orderId=${orderId}`
     });
 
     // Update order with N-Genius reference
-    await client.query(`
+    await connection.execute(`
       UPDATE orders 
-      SET ngenius_order_ref = $1, payment_url = $2, status = 'awaiting_payment', updated_at = NOW()
-      WHERE id = $3
-    `, [ngeniusOrder.orderRef, ngeniusOrder.paymentUrl, order.id]);
+      SET ngenius_order_ref = ?, payment_url = ?, status = 'awaiting_payment'
+      WHERE id = ?
+    `, [ngeniusOrder.orderRef, ngeniusOrder.paymentUrl, orderId]);
 
     // Return success with payment URL
     res.status(201).json({
       success: true,
       data: {
-        id: order.id,
+        id: orderId,
         merchantOrderReference: merchantOrderRef,
         ngeniusOrderRef: ngeniusOrder.orderRef,
         paymentUrl: ngeniusOrder.paymentUrl,
@@ -161,7 +164,7 @@ const createOrder = async (req, res) => {
       message: error.message || 'Failed to create order'
     });
   } finally {
-    client.release();
+    connection.release();
   }
 };
 
@@ -173,12 +176,12 @@ const getOrder = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query(
-      'SELECT * FROM orders WHERE id = $1',
+    const [orders] = await pool.execute(
+      'SELECT * FROM orders WHERE id = ?',
       [id]
     );
 
-    if (result.rows.length === 0) {
+    if (orders.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Order not found'
@@ -187,7 +190,7 @@ const getOrder = async (req, res) => {
 
     res.json({
       success: true,
-      data: result.rows[0]
+      data: orders[0]
     });
 
   } catch (error) {
@@ -200,53 +203,69 @@ const getOrder = async (req, res) => {
 };
 
 /**
- * Get order status (checks with N-Genius)
- * GET /api/v1/orders/:id/status
+ * Verify payment status (called when user returns from payment page)
+ * GET /api/v1/orders/:id/verify
  */
-const getOrderStatus = async (req, res) => {
-  const client = await pool.connect();
+const verifyPayment = async (req, res) => {
+  const connection = await pool.getConnection();
   
   try {
     const { id } = req.params;
 
-    const orderResult = await client.query(
-      'SELECT * FROM orders WHERE id = $1',
+    const [orders] = await connection.execute(
+      'SELECT * FROM orders WHERE id = ?',
       [id]
     );
 
-    if (orderResult.rows.length === 0) {
+    if (orders.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Order not found'
       });
     }
 
-    const order = orderResult.rows[0];
+    const order = orders[0];
 
-    // If order has N-Genius reference, check status
+    // If already paid, return cached status
+    if (order.status === 'paid') {
+      return res.json({
+        success: true,
+        data: {
+          orderId: order.id,
+          status: 'paid',
+          amount: parseFloat(order.total_amount),
+          currency: order.currency
+        }
+      });
+    }
+
+    // If order has N-Genius reference, check status with N-Genius
     if (order.ngenius_order_ref) {
       try {
         const ngeniusStatus = await ngeniusService.getOrderStatus(order.ngenius_order_ref);
         
         // Map N-Genius state to our status
         let newStatus = order.status;
-        if (ngeniusStatus.state === 'CAPTURED' || ngeniusStatus.payment?.state === 'CAPTURED') {
+        const paymentState = ngeniusStatus.payment?.state || ngeniusStatus.state;
+
+        if (paymentState === 'CAPTURED' || paymentState === 'PURCHASED') {
           newStatus = 'paid';
-        } else if (ngeniusStatus.state === 'FAILED') {
+        } else if (paymentState === 'FAILED' || paymentState === 'DECLINED') {
           newStatus = 'failed';
-        } else if (ngeniusStatus.state === 'STARTED') {
+        } else if (paymentState === 'STARTED' || paymentState === 'PENDING') {
           newStatus = 'awaiting_payment';
+        } else if (paymentState === 'AUTHORISED') {
+          newStatus = 'processing';
         }
 
         // Update order if status changed
         if (newStatus !== order.status) {
-          await client.query(`
+          await connection.execute(`
             UPDATE orders 
-            SET status = $1, 
-                ngenius_payment_ref = $2,
-                paid_at = $3,
-                updated_at = NOW()
-            WHERE id = $4
+            SET status = ?, 
+                ngenius_payment_ref = ?,
+                paid_at = ?
+            WHERE id = ?
           `, [
             newStatus,
             ngeniusStatus.payment?.paymentRef || null,
@@ -256,21 +275,22 @@ const getOrderStatus = async (req, res) => {
 
           // Log transaction
           if (ngeniusStatus.payment) {
-            await client.query(`
+            const transactionId = uuidv4();
+            await connection.execute(`
               INSERT INTO payment_transactions (
-                order_id, ngenius_payment_ref, ngenius_order_ref,
+                id, order_id, ngenius_payment_ref, ngenius_order_ref,
                 transaction_type, amount, currency, status,
                 auth_code, card_brand, card_last_four, raw_response
-              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-              ON CONFLICT DO NOTHING
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
+              transactionId,
               id,
               ngeniusStatus.payment.paymentRef,
               order.ngenius_order_ref,
               'sale',
               ngeniusStatus.amount,
-              ngeniusStatus.currency,
-              ngeniusStatus.payment.state?.toLowerCase(),
+              ngeniusStatus.currency || 'AED',
+              newStatus,
               ngeniusStatus.payment.authCode,
               ngeniusStatus.payment.cardBrand,
               ngeniusStatus.payment.cardLastFour,
@@ -284,9 +304,9 @@ const getOrderStatus = async (req, res) => {
           data: {
             orderId: order.id,
             status: newStatus,
-            paymentStatus: ngeniusStatus.payment?.state,
-            amount: ngeniusStatus.amount,
-            currency: ngeniusStatus.currency,
+            paymentStatus: paymentState,
+            amount: ngeniusStatus.amount || parseFloat(order.total_amount),
+            currency: ngeniusStatus.currency || order.currency,
             cardBrand: ngeniusStatus.payment?.cardBrand,
             cardLastFour: ngeniusStatus.payment?.cardLastFour
           }
@@ -318,13 +338,13 @@ const getOrderStatus = async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Get Order Status Error:', error);
+    console.error('Verify Payment Error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get order status'
+      message: 'Failed to verify payment'
     });
   } finally {
-    client.release();
+    connection.release();
   }
 };
 
@@ -343,14 +363,14 @@ const getMyOrders = async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      'SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC',
+    const [orders] = await pool.execute(
+      'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC',
       [userId]
     );
 
     res.json({
       success: true,
-      data: result.rows
+      data: orders
     });
 
   } catch (error) {
@@ -363,136 +383,29 @@ const getMyOrders = async (req, res) => {
 };
 
 /**
- * N-Genius Webhook Handler
- * POST /api/v1/orders/webhook
- */
-const handleWebhook = async (req, res) => {
-  const client = await pool.connect();
-  
-  try {
-    const payload = req.body;
-    
-    // Log webhook for debugging
-    await client.query(`
-      INSERT INTO webhook_logs (source, event_type, order_ref, payload)
-      VALUES ($1, $2, $3, $4)
-    `, [
-      'ngenius',
-      payload.eventName || 'unknown',
-      payload.order?.reference,
-      JSON.stringify(payload)
-    ]);
-
-    // Process payment notification
-    if (payload.order?.reference) {
-      const orderRef = payload.order.reference;
-      const payment = payload.order._embedded?.payment?.[0];
-      
-      // Find order by N-Genius reference
-      const orderResult = await client.query(
-        'SELECT * FROM orders WHERE ngenius_order_ref = $1',
-        [orderRef]
-      );
-
-      if (orderResult.rows.length > 0) {
-        const order = orderResult.rows[0];
-        
-        // Determine new status
-        let newStatus = order.status;
-        const paymentState = payment?.state;
-
-        if (paymentState === 'CAPTURED') {
-          newStatus = 'paid';
-        } else if (paymentState === 'FAILED') {
-          newStatus = 'failed';
-        } else if (paymentState === 'AUTHORISED') {
-          newStatus = 'processing';
-        }
-
-        // Update order
-        await client.query(`
-          UPDATE orders 
-          SET status = $1, 
-              ngenius_payment_ref = $2,
-              paid_at = $3,
-              updated_at = NOW()
-          WHERE id = $4
-        `, [
-          newStatus,
-          payment?.reference,
-          newStatus === 'paid' ? new Date() : null,
-          order.id
-        ]);
-
-        // Log transaction
-        if (payment) {
-          await client.query(`
-            INSERT INTO payment_transactions (
-              order_id, ngenius_payment_ref, ngenius_order_ref,
-              transaction_type, amount, currency, status,
-              response_code, response_message, auth_code,
-              card_brand, card_last_four, raw_response
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-          `, [
-            order.id,
-            payment.reference,
-            orderRef,
-            'sale',
-            (payment.amount?.value || 0) / 100,
-            payment.amount?.currencyCode || 'AED',
-            paymentState?.toLowerCase(),
-            payment._embedded?.cnpResponse?.resultCode,
-            payment._embedded?.cnpResponse?.resultMessage,
-            payment.authorizationCode,
-            payment._embedded?.cnpResponse?.scheme,
-            payment._embedded?.cnpResponse?.pan?.slice(-4),
-            JSON.stringify(payload)
-          ]);
-        }
-
-        // Mark webhook as processed
-        await client.query(`
-          UPDATE webhook_logs SET processed = true WHERE order_ref = $1
-        `, [orderRef]);
-      }
-    }
-
-    // Always return 200 to acknowledge webhook
-    res.status(200).json({ received: true });
-
-  } catch (error) {
-    console.error('Webhook Error:', error);
-    // Still return 200 to prevent retries
-    res.status(200).json({ received: true, error: error.message });
-  } finally {
-    client.release();
-  }
-};
-
-/**
  * Process refund
  * POST /api/v1/orders/:id/refund
  */
 const refundOrder = async (req, res) => {
-  const client = await pool.connect();
+  const connection = await pool.getConnection();
   
   try {
     const { id } = req.params;
-    const { amount } = req.body; // Optional partial refund amount
+    const { amount } = req.body;
 
-    const orderResult = await client.query(
-      'SELECT * FROM orders WHERE id = $1',
+    const [orders] = await connection.execute(
+      'SELECT * FROM orders WHERE id = ?',
       [id]
     );
 
-    if (orderResult.rows.length === 0) {
+    if (orders.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Order not found'
       });
     }
 
-    const order = orderResult.rows[0];
+    const order = orders[0];
 
     if (order.status !== 'paid') {
       return res.status(400).json({
@@ -516,24 +429,27 @@ const refundOrder = async (req, res) => {
     );
 
     // Update order status
-    await client.query(`
-      UPDATE orders SET status = 'refunded', updated_at = NOW() WHERE id = $1
-    `, [id]);
+    await connection.execute(
+      'UPDATE orders SET status = ? WHERE id = ?',
+      ['refunded', id]
+    );
 
     // Log refund transaction
-    await client.query(`
+    const transactionId = uuidv4();
+    await connection.execute(`
       INSERT INTO payment_transactions (
-        order_id, ngenius_payment_ref, ngenius_order_ref,
+        id, order_id, ngenius_payment_ref, ngenius_order_ref,
         transaction_type, amount, currency, status, raw_response
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
+      transactionId,
       id,
       refundResult.refundRef,
       order.ngenius_order_ref,
       'refund',
       amount || order.total_amount,
       order.currency,
-      refundResult.state?.toLowerCase(),
+      'refunded',
       JSON.stringify(refundResult.rawResponse)
     ]);
 
@@ -554,15 +470,14 @@ const refundOrder = async (req, res) => {
       message: error.message || 'Failed to process refund'
     });
   } finally {
-    client.release();
+    connection.release();
   }
 };
 
 module.exports = {
   createOrder,
   getOrder,
-  getOrderStatus,
+  verifyPayment,
   getMyOrders,
-  handleWebhook,
   refundOrder
 };
