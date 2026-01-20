@@ -1,49 +1,21 @@
 /**
- * Orders Controller (MySQL Version - No Webhook)
+ * Orders Controller (Sequelize Version - No Webhook)
  * BeFree EdTech Platform
  * 
  * Payment is verified when user returns to success/cancel page
  */
 
-// Load environment variables first
-require('dotenv').config();
-
-const mysql = require('mysql2/promise');
+const { sequelize } = require('../config/database'); // Adjust path to your database config
+const { QueryTypes } = require('sequelize');
 const ngeniusService = require('../services/ngenius.service');
 const { v4: uuidv4 } = require('uuid');
-
-// Database configuration - create pool lazily to ensure env vars are loaded
-let pool = null;
-
-const getPool = () => {
-  if (!pool) {
-    // Debug: Log config (remove in production)
-    console.log('Database config:', {
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      database: process.env.DB_NAME || 'edtech',
-      hasPassword: !!process.env.DB_PASSWORD
-    });
-
-    pool = mysql.createPool({
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'edtech',
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0
-    });
-  }
-  return pool;
-};
 
 /**
  * Create a new order and initiate payment
  * POST /api/v1/orders
  */
 const createOrder = async (req, res) => {
-  const connection = await getPool().getConnection();
+  const transaction = await sequelize.transaction();
   
   try {
     const {
@@ -67,12 +39,17 @@ const createOrder = async (req, res) => {
     }
 
     // Fetch plan details from database
-    const [plans] = await connection.execute(
+    const plans = await sequelize.query(
       'SELECT * FROM plans WHERE id = ? OR name = ?',
-      [planId, planId]
+      {
+        replacements: [planId, planId],
+        type: QueryTypes.SELECT,
+        transaction
+      }
     );
 
     if (plans.length === 0) {
+      await transaction.rollback();
       return res.status(404).json({
         success: false,
         message: 'Plan not found'
@@ -102,7 +79,7 @@ const createOrder = async (req, res) => {
     const merchantOrderRef = `BF-${Date.now()}-${orderId.slice(0, 8).toUpperCase()}`;
 
     // Create order in database
-    await connection.execute(`
+    await sequelize.query(`
       INSERT INTO orders (
         id, user_id, plan_id, plan_name, billing_cycle, quantity,
         base_price, discount_amount, total_amount, currency,
@@ -110,31 +87,35 @@ const createOrder = async (req, res) => {
         country, address_line1, address_line2, city, state, postal_code,
         payment_method, merchant_order_reference, status
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      orderId,
-      userId,
-      plan.id || plan.name,
-      plan.name,
-      billing,
-      qty,
-      basePrice,
-      discountAmount,
-      totalAmount,
-      'AED',
-      contactInfo.firstName,
-      contactInfo.lastName,
-      contactInfo.email,
-      contactInfo.phone || null,
-      billingAddress?.country || contactInfo.country,
-      billingAddress?.address1 || contactInfo.address1,
-      billingAddress?.address2 || contactInfo.address2 || null,
-      billingAddress?.city || contactInfo.city,
-      billingAddress?.state || contactInfo.state || null,
-      billingAddress?.zip || contactInfo.zip || null,
-      paymentMethod,
-      merchantOrderRef,
-      'pending'
-    ]);
+    `, {
+      replacements: [
+        orderId,
+        userId,
+        plan.id || plan.name,
+        plan.name,
+        billing,
+        qty,
+        basePrice,
+        discountAmount,
+        totalAmount,
+        'AED',
+        contactInfo.firstName,
+        contactInfo.lastName,
+        contactInfo.email,
+        contactInfo.phone || null,
+        billingAddress?.country || contactInfo.country,
+        billingAddress?.address1 || contactInfo.address1,
+        billingAddress?.address2 || contactInfo.address2 || null,
+        billingAddress?.city || contactInfo.city,
+        billingAddress?.state || contactInfo.state || null,
+        billingAddress?.zip || contactInfo.zip || null,
+        paymentMethod,
+        merchantOrderRef,
+        'pending'
+      ],
+      type: QueryTypes.INSERT,
+      transaction
+    });
 
     // Create N-Genius payment order
     const ngeniusOrder = await ngeniusService.createOrder({
@@ -156,11 +137,17 @@ const createOrder = async (req, res) => {
     });
 
     // Update order with N-Genius reference
-    await connection.execute(`
+    await sequelize.query(`
       UPDATE orders 
       SET ngenius_order_ref = ?, payment_url = ?, status = 'awaiting_payment'
       WHERE id = ?
-    `, [ngeniusOrder.orderRef, ngeniusOrder.paymentUrl, orderId]);
+    `, {
+      replacements: [ngeniusOrder.orderRef, ngeniusOrder.paymentUrl, orderId],
+      type: QueryTypes.UPDATE,
+      transaction
+    });
+
+    await transaction.commit();
 
     // Return success with payment URL
     res.status(201).json({
@@ -176,13 +163,12 @@ const createOrder = async (req, res) => {
     });
 
   } catch (error) {
+    await transaction.rollback();
     console.error('Create Order Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to create order'
     });
-  } finally {
-    connection.release();
   }
 };
 
@@ -194,9 +180,12 @@ const getOrder = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [orders] = await getPool().execute(
+    const orders = await sequelize.query(
       'SELECT * FROM orders WHERE id = ?',
-      [id]
+      {
+        replacements: [id],
+        type: QueryTypes.SELECT
+      }
     );
 
     if (orders.length === 0) {
@@ -225,17 +214,22 @@ const getOrder = async (req, res) => {
  * GET /api/v1/orders/:id/verify
  */
 const verifyPayment = async (req, res) => {
-  const connection = await getPool().getConnection();
+  const transaction = await sequelize.transaction();
   
   try {
     const { id } = req.params;
 
-    const [orders] = await connection.execute(
+    const orders = await sequelize.query(
       'SELECT * FROM orders WHERE id = ?',
-      [id]
+      {
+        replacements: [id],
+        type: QueryTypes.SELECT,
+        transaction
+      }
     );
 
     if (orders.length === 0) {
+      await transaction.rollback();
       return res.status(404).json({
         success: false,
         message: 'Order not found'
@@ -246,6 +240,7 @@ const verifyPayment = async (req, res) => {
 
     // If already paid, return cached status
     if (order.status === 'paid') {
+      await transaction.commit();
       return res.json({
         success: true,
         data: {
@@ -278,44 +273,56 @@ const verifyPayment = async (req, res) => {
 
         // Update order if status changed
         if (newStatus !== order.status) {
-          await connection.execute(`
+          const paidAt = newStatus === 'paid' ? new Date() : null;
+          
+          await sequelize.query(`
             UPDATE orders 
             SET status = ?, 
                 ngenius_payment_ref = ?,
                 paid_at = ?
             WHERE id = ?
-          `, [
-            newStatus,
-            ngeniusStatus.payment?.paymentRef || null,
-            newStatus === 'paid' ? new Date() : null,
-            id
-          ]);
+          `, {
+            replacements: [
+              newStatus,
+              ngeniusStatus.payment?.paymentRef || null,
+              paidAt,
+              id
+            ],
+            type: QueryTypes.UPDATE,
+            transaction
+          });
 
           // Log transaction
           if (ngeniusStatus.payment) {
             const transactionId = uuidv4();
-            await connection.execute(`
+            await sequelize.query(`
               INSERT INTO payment_transactions (
                 id, order_id, ngenius_payment_ref, ngenius_order_ref,
                 transaction_type, amount, currency, status,
                 auth_code, card_brand, card_last_four, raw_response
               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-              transactionId,
-              id,
-              ngeniusStatus.payment.paymentRef,
-              order.ngenius_order_ref,
-              'sale',
-              ngeniusStatus.amount,
-              ngeniusStatus.currency || 'AED',
-              newStatus,
-              ngeniusStatus.payment.authCode,
-              ngeniusStatus.payment.cardBrand,
-              ngeniusStatus.payment.cardLastFour,
-              JSON.stringify(ngeniusStatus.rawResponse)
-            ]);
+            `, {
+              replacements: [
+                transactionId,
+                id,
+                ngeniusStatus.payment.paymentRef,
+                order.ngenius_order_ref,
+                'sale',
+                ngeniusStatus.amount,
+                ngeniusStatus.currency || 'AED',
+                newStatus,
+                ngeniusStatus.payment.authCode,
+                ngeniusStatus.payment.cardBrand,
+                ngeniusStatus.payment.cardLastFour,
+                JSON.stringify(ngeniusStatus.rawResponse)
+              ],
+              type: QueryTypes.INSERT,
+              transaction
+            });
           }
         }
+
+        await transaction.commit();
 
         res.json({
           success: true,
@@ -332,6 +339,7 @@ const verifyPayment = async (req, res) => {
 
       } catch (ngError) {
         console.error('N-Genius Status Check Error:', ngError);
+        await transaction.commit();
         // Return cached status if N-Genius check fails
         res.json({
           success: true,
@@ -344,6 +352,7 @@ const verifyPayment = async (req, res) => {
         });
       }
     } else {
+      await transaction.commit();
       res.json({
         success: true,
         data: {
@@ -356,13 +365,12 @@ const verifyPayment = async (req, res) => {
     }
 
   } catch (error) {
+    await transaction.rollback();
     console.error('Verify Payment Error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to verify payment'
     });
-  } finally {
-    connection.release();
   }
 };
 
@@ -381,9 +389,12 @@ const getMyOrders = async (req, res) => {
       });
     }
 
-    const [orders] = await getPool().execute(
+    const orders = await sequelize.query(
       'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC',
-      [userId]
+      {
+        replacements: [userId],
+        type: QueryTypes.SELECT
+      }
     );
 
     res.json({
@@ -405,18 +416,23 @@ const getMyOrders = async (req, res) => {
  * POST /api/v1/orders/:id/refund
  */
 const refundOrder = async (req, res) => {
-  const connection = await getPool().getConnection();
+  const transaction = await sequelize.transaction();
   
   try {
     const { id } = req.params;
     const { amount } = req.body;
 
-    const [orders] = await connection.execute(
+    const orders = await sequelize.query(
       'SELECT * FROM orders WHERE id = ?',
-      [id]
+      {
+        replacements: [id],
+        type: QueryTypes.SELECT,
+        transaction
+      }
     );
 
     if (orders.length === 0) {
+      await transaction.rollback();
       return res.status(404).json({
         success: false,
         message: 'Order not found'
@@ -426,6 +442,7 @@ const refundOrder = async (req, res) => {
     const order = orders[0];
 
     if (order.status !== 'paid') {
+      await transaction.rollback();
       return res.status(400).json({
         success: false,
         message: 'Only paid orders can be refunded'
@@ -433,6 +450,7 @@ const refundOrder = async (req, res) => {
     }
 
     if (!order.ngenius_order_ref || !order.ngenius_payment_ref) {
+      await transaction.rollback();
       return res.status(400).json({
         success: false,
         message: 'Payment reference not found'
@@ -447,29 +465,39 @@ const refundOrder = async (req, res) => {
     );
 
     // Update order status
-    await connection.execute(
+    await sequelize.query(
       'UPDATE orders SET status = ? WHERE id = ?',
-      ['refunded', id]
+      {
+        replacements: ['refunded', id],
+        type: QueryTypes.UPDATE,
+        transaction
+      }
     );
 
     // Log refund transaction
     const transactionId = uuidv4();
-    await connection.execute(`
+    await sequelize.query(`
       INSERT INTO payment_transactions (
         id, order_id, ngenius_payment_ref, ngenius_order_ref,
         transaction_type, amount, currency, status, raw_response
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [
-      transactionId,
-      id,
-      refundResult.refundRef,
-      order.ngenius_order_ref,
-      'refund',
-      amount || order.total_amount,
-      order.currency,
-      'refunded',
-      JSON.stringify(refundResult.rawResponse)
-    ]);
+    `, {
+      replacements: [
+        transactionId,
+        id,
+        refundResult.refundRef,
+        order.ngenius_order_ref,
+        'refund',
+        amount || order.total_amount,
+        order.currency,
+        'refunded',
+        JSON.stringify(refundResult.rawResponse)
+      ],
+      type: QueryTypes.INSERT,
+      transaction
+    });
+
+    await transaction.commit();
 
     res.json({
       success: true,
@@ -482,13 +510,12 @@ const refundOrder = async (req, res) => {
     });
 
   } catch (error) {
+    await transaction.rollback();
     console.error('Refund Error:', error);
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to process refund'
     });
-  } finally {
-    connection.release();
   }
 };
 

@@ -1,27 +1,29 @@
-# N-Genius Payment Gateway Integration (MySQL - No Webhook)
+# N-Genius Payment Gateway Integration (Sequelize - No Webhook)
 
 Complete backend integration for N-Genius payment gateway for the BeFree EdTech Platform.
-Uses payment verification on redirect instead of webhooks.
+Uses your existing Sequelize database connection and payment verification on redirect.
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Install Additional Dependencies
 
 ```bash
-npm install express mysql2 axios uuid dotenv cors
+npm install axios uuid
 ```
 
-### 2. Environment Variables
+### 2. Update Database Import Path
+
+In `controllers/orders.controller.js`, update the import to match your database config path:
+
+```javascript
+const { sequelize } = require('../config/database'); // Adjust to your path
+```
+
+### 3. Environment Variables
 
 Add these to your `.env` file:
 
 ```env
-# Database (MySQL)
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=edtech
-
 # N-Genius Configuration
 NGENIUS_ENV=sandbox                          # 'sandbox' or 'production'
 NGENIUS_API_KEY=your_base64_encoded_api_key  # From N-Genius portal
@@ -33,15 +35,15 @@ NGENIUS_CURRENCY=AED                         # Default currency
 FRONTEND_URL=https://your-frontend-domain.com
 ```
 
-### 3. Run Database Migration
+### 4. Run Database Migration
 
 Execute the SQL in `database/schema.sql`:
 
 ```bash
-mysql -u root -p edtech < database/schema.sql
+mysql -u root -p your_database < database/schema.sql
 ```
 
-### 4. Integrate Routes
+### 5. Integrate Routes
 
 Add to your main Express app:
 
@@ -135,7 +137,7 @@ Request Body (optional for partial refund):
 ## Payment Flow (No Webhook)
 
 1. Frontend calls `POST /api/v1/orders` with plan and contact info
-2. Backend creates order in database
+2. Backend creates order in database using Sequelize transaction
 3. Backend calls N-Genius API to create payment session
 4. Backend returns `paymentUrl` to frontend
 5. Frontend redirects user to N-Genius hosted payment page
