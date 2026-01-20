@@ -5,27 +5,45 @@
  * Payment is verified when user returns to success/cancel page
  */
 
+// Load environment variables first
+require('dotenv').config();
+
 const mysql = require('mysql2/promise');
 const ngeniusService = require('../services/ngenius.service');
 const { v4: uuidv4 } = require('uuid');
 
-// Database connection pool
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME || 'edtech',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
+// Database configuration - create pool lazily to ensure env vars are loaded
+let pool = null;
+
+const getPool = () => {
+  if (!pool) {
+    // Debug: Log config (remove in production)
+    console.log('Database config:', {
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      database: process.env.DB_NAME || 'edtech',
+      hasPassword: !!process.env.DB_PASSWORD
+    });
+
+    pool = mysql.createPool({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'edtech',
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0
+    });
+  }
+  return pool;
+};
 
 /**
  * Create a new order and initiate payment
  * POST /api/v1/orders
  */
 const createOrder = async (req, res) => {
-  const connection = await pool.getConnection();
+  const connection = await getPool().getConnection();
   
   try {
     const {
@@ -176,7 +194,7 @@ const getOrder = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [orders] = await pool.execute(
+    const [orders] = await getPool().execute(
       'SELECT * FROM orders WHERE id = ?',
       [id]
     );
@@ -207,7 +225,7 @@ const getOrder = async (req, res) => {
  * GET /api/v1/orders/:id/verify
  */
 const verifyPayment = async (req, res) => {
-  const connection = await pool.getConnection();
+  const connection = await getPool().getConnection();
   
   try {
     const { id } = req.params;
@@ -363,7 +381,7 @@ const getMyOrders = async (req, res) => {
       });
     }
 
-    const [orders] = await pool.execute(
+    const [orders] = await getPool().execute(
       'SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC',
       [userId]
     );
@@ -387,7 +405,7 @@ const getMyOrders = async (req, res) => {
  * POST /api/v1/orders/:id/refund
  */
 const refundOrder = async (req, res) => {
-  const connection = await pool.getConnection();
+  const connection = await getPool().getConnection();
   
   try {
     const { id } = req.params;
