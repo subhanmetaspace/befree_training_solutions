@@ -211,6 +211,7 @@ const getOrder = async (req, res) => {
 
 /**
  * Verify payment status (called when user returns from payment page)
+ * Sends email notifications and invoice on successful payment
  * GET /api/v1/orders/:id/verify
  */
 const verifyPayment = async (req, res) => {
@@ -238,7 +239,7 @@ const verifyPayment = async (req, res) => {
 
     const order = orders[0];
 
-    // If already paid, return cached status
+    // If already paid, return cached status (emails already sent)
     if (order.status === 'paid') {
       await transaction.commit();
       return res.json({
@@ -247,23 +248,28 @@ const verifyPayment = async (req, res) => {
           orderId: order.id,
           status: 'paid',
           amount: parseFloat(order.total_amount),
-          currency: order.currency
+          currency: order.currency,
+          invoiceSent: true
         }
       });
     }
 
-    // If order has N-Genius reference, check status with N-Genius
+    // If order has N-Genius reference, verify with N-Genius and send notifications
     if (order.ngenius_order_ref) {
       try {
-        const ngeniusStatus = await ngeniusService.getOrderStatus(order.ngenius_order_ref);
+        // Use verifyPaymentAndNotify which handles emails and invoice
+        const verificationResult = await ngeniusService.verifyPaymentAndNotify(
+          order.ngenius_order_ref,
+          order
+        );
+        
+        const paymentState = verificationResult.payment?.state || verificationResult.state;
         
         // Map N-Genius state to our status
         let newStatus = order.status;
-        const paymentState = ngeniusStatus.payment?.state || ngeniusStatus.state;
-
-        if (paymentState === 'CAPTURED' || paymentState === 'PURCHASED') {
+        if (verificationResult.isSuccess) {
           newStatus = 'paid';
-        } else if (paymentState === 'FAILED' || paymentState === 'DECLINED') {
+        } else if (verificationResult.isFailed) {
           newStatus = 'failed';
         } else if (paymentState === 'STARTED' || paymentState === 'PENDING') {
           newStatus = 'awaiting_payment';
@@ -284,7 +290,7 @@ const verifyPayment = async (req, res) => {
           `, {
             replacements: [
               newStatus,
-              ngeniusStatus.payment?.paymentRef || null,
+              verificationResult.payment?.paymentRef || null,
               paidAt,
               id
             ],
@@ -293,7 +299,7 @@ const verifyPayment = async (req, res) => {
           });
 
           // Log transaction
-          if (ngeniusStatus.payment) {
+          if (verificationResult.payment) {
             const transactionId = uuidv4();
             await sequelize.query(`
               INSERT INTO payment_transactions (
@@ -305,16 +311,16 @@ const verifyPayment = async (req, res) => {
               replacements: [
                 transactionId,
                 id,
-                ngeniusStatus.payment.paymentRef,
+                verificationResult.payment.paymentRef,
                 order.ngenius_order_ref,
                 'sale',
-                ngeniusStatus.amount,
-                ngeniusStatus.currency || 'AED',
+                verificationResult.amount,
+                verificationResult.currency || 'AED',
                 newStatus,
-                ngeniusStatus.payment.authCode,
-                ngeniusStatus.payment.cardBrand,
-                ngeniusStatus.payment.cardLastFour,
-                JSON.stringify(ngeniusStatus.rawResponse)
+                verificationResult.payment.authCode,
+                verificationResult.payment.cardBrand,
+                verificationResult.payment.cardLastFour,
+                JSON.stringify(verificationResult.rawResponse)
               ],
               type: QueryTypes.INSERT,
               transaction
@@ -330,10 +336,12 @@ const verifyPayment = async (req, res) => {
             orderId: order.id,
             status: newStatus,
             paymentStatus: paymentState,
-            amount: ngeniusStatus.amount || parseFloat(order.total_amount),
-            currency: ngeniusStatus.currency || order.currency,
-            cardBrand: ngeniusStatus.payment?.cardBrand,
-            cardLastFour: ngeniusStatus.payment?.cardLastFour
+            amount: verificationResult.amount || parseFloat(order.total_amount),
+            currency: verificationResult.currency || order.currency,
+            cardBrand: verificationResult.payment?.cardBrand,
+            cardLastFour: verificationResult.payment?.cardLastFour,
+            emailsSent: verificationResult.emailsSent,
+            invoiceSent: verificationResult.invoiceSent
           }
         });
 

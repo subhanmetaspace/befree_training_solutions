@@ -3,10 +3,13 @@
  * BeFree EdTech Platform
  * 
  * Handles all communication with N-Genius payment gateway
+ * Includes invoice generation and email notifications
  */
 
 const axios = require('axios');
 const config = require('../config/ngenius.config');
+const { sendOrderCreatedEmail, sendPaymentSuccessEmail, sendPaymentFailedEmail, sendInvoiceEmail } = require('./email.service');
+const { generateInvoicePDF } = require('./invoice.service');
 
 class NGeniusService {
   constructor() {
@@ -152,6 +155,74 @@ class NGeniusService {
     } catch (error) {
       console.error('N-Genius Get Order Error:', error.response?.data || error.message);
       throw new Error('Failed to get order status');
+    }
+  }
+
+  /**
+   * Verify payment and send appropriate emails with invoice
+   * Call this when user redirects back from N-Genius payment page
+   * @param {string} orderRef - N-Genius order reference
+   * @param {Object} orderDetails - Full order details from database
+   * @returns {Object} Payment verification result with email status
+   */
+  async verifyPaymentAndNotify(orderRef, orderDetails) {
+    try {
+      const ngeniusStatus = await this.getOrderStatus(orderRef);
+      const paymentState = ngeniusStatus.payment?.state || ngeniusStatus.state;
+      
+      const isSuccess = paymentState === 'CAPTURED' || paymentState === 'PURCHASED';
+      const isFailed = paymentState === 'FAILED' || paymentState === 'DECLINED';
+
+      // Prepare order data for emails
+      const orderForEmail = {
+        ...orderDetails,
+        orderNumber: orderDetails.merchant_order_reference || orderDetails.merchantOrderReference,
+        paymentStatus: isSuccess ? 'paid' : (isFailed ? 'failed' : 'pending'),
+        paymentMethod: 'card',
+        cardBrand: ngeniusStatus.payment?.cardBrand,
+        cardLastFour: ngeniusStatus.payment?.cardLastFour,
+        authCode: ngeniusStatus.payment?.authCode,
+        paidAt: isSuccess ? new Date() : null,
+        amount: ngeniusStatus.amount || orderDetails.total_amount,
+        currency: ngeniusStatus.currency || orderDetails.currency || 'AED'
+      };
+
+      let emailsSent = false;
+      let invoiceSent = false;
+
+      if (isSuccess) {
+        // Send payment success email
+        await sendPaymentSuccessEmail(orderForEmail).catch(err =>
+          console.error("Error sending payment success email:", err)
+        );
+        emailsSent = true;
+
+        // Generate and send invoice
+        try {
+          const invoiceBuffer = await generateInvoicePDF(orderForEmail);
+          await sendInvoiceEmail(orderForEmail, invoiceBuffer);
+          invoiceSent = true;
+        } catch (err) {
+          console.error("Error sending invoice email:", err);
+        }
+      } else if (isFailed) {
+        // Send payment failed email
+        await sendPaymentFailedEmail(orderForEmail, 'Payment was declined by the bank').catch(err =>
+          console.error("Error sending payment failed email:", err)
+        );
+        emailsSent = true;
+      }
+
+      return {
+        ...ngeniusStatus,
+        isSuccess,
+        isFailed,
+        emailsSent,
+        invoiceSent
+      };
+    } catch (error) {
+      console.error('Verify Payment and Notify Error:', error);
+      throw error;
     }
   }
 
