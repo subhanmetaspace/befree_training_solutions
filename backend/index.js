@@ -15,7 +15,8 @@ app.use(
     origin: (origin, callback) => {
       const allowedOrigins = [
         "https://befreetraining.net",
-        "http://localhost:3000"
+        "http://localhost:3000",
+        "https://7125bce4-753c-4e16-b02e-d5bbd340eda3-00-2ojlk0ircnnqe.pike.replit.dev"
       ];
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
