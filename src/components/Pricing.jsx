@@ -7,7 +7,7 @@ import { useNavigate } from "react-router";
 const plans = [
   {
     name: "Starter",
-    price: "100",
+    price: "20000",
     description: "Ideal for individuals beginning their skill journey",
     features: [
       "Access to selected skill-based classes",
@@ -19,7 +19,7 @@ const plans = [
   },
   {
     name: "Professional",
-    price: "500",
+    price: "100000",
     description: "Perfect for learners seeking professional growth",
     features: [
       "Unlimited access to all skill-based classes",
@@ -33,7 +33,7 @@ const plans = [
   },
   {
     name: "Enterprise",
-    price: "1500",
+    price: "250000",
     description: "Tailored for institutions and corporate teams",
     features: [
       "Everything in Professional",
@@ -101,7 +101,7 @@ useEffect(()=>{
       {plan.description}
     </p>
     <div className="flex items-baseline justify-center">
-      <span className="text-4xl font-bold text-primary">AED {plan.price}</span>
+      <span className="text-4xl font-bold text-primary">₹{Number(plan.price).toLocaleString('en-IN')}</span>
       <span className="text-muted-foreground ml-2">/month</span>
     </div>
   </div>

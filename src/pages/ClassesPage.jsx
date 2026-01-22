@@ -121,7 +121,7 @@ const ClassesPage = () => {
                         <Clock className="w-4 h-4" />
                         {cls.duration_minutes} min
                       </div>
-                      {cls.price && <Badge variant="secondary">AED {cls.price}</Badge>}
+                      {cls.price && <Badge variant="secondary">₹{Number(cls.price).toLocaleString('en-IN')}</Badge>}
                     </div>
                     <Button
                       onClick={() => enrollClass(cls)}

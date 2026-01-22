@@ -16,8 +16,8 @@ const config = {
   // Realm (usually 'ni')
   realm: process.env.NGENIUS_REALM || 'ni',
   
-  // Currency
-  currency: process.env.NGENIUS_CURRENCY || 'AED',
+  // Currency (INR for Indian Rupee)
+  currency: process.env.NGENIUS_CURRENCY || 'INR',
   
   // URLs based on environment
   get identityUrl() {
