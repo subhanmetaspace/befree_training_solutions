@@ -66,7 +66,7 @@ const CookiePolicy = () => {
                 <section>
                   <h2 className="text-2xl font-bold text-foreground mb-4">5. Contact Us</h2>
                   <p>
-                    If you have any questions about our use of cookies, please contact us at privacy@befree.com
+                    If you have any questions about our use of cookies, please contact us at befreeeducation7107@gmail.com
                   </p>
                 </section>
               </div>

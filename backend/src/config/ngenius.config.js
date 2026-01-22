@@ -28,14 +28,14 @@ const config = {
   
   get gatewayUrl() {
     const baseUrl = this.environment === 'production'
-      ? "https://api-gateway.ngenius-payments.com/transactions/outlets/4c731209-d54d-4d7a-b965-9a0f0a655616/orders"
+      ? "https://api-gateway.ngenius-payments.com/transactions/outlets/e5f5f434-fcaf-4713-a2ed-dc7b9e8f66f5/orders"
       : 'https://api-gateway.sandbox.ngenius-payments.com';
     return `${baseUrl}`;
   },
   
   // Redirect URLs (update with your actual domain)
-  redirectUrl: process.env.NGENIUS_REDIRECT_URL || 'https://your-frontend-domain.com/payment-success',
-  cancelUrl: process.env.NGENIUS_CANCEL_URL || 'https://your-frontend-domain.com/payment-cancel',
+  redirectUrl: process.env.NGENIUS_REDIRECT_URL || 'https://befreetraining.net/payment-success',
+  cancelUrl: process.env.NGENIUS_CANCEL_URL || 'https://befreetraining.net/payment-cancel',
   
   // Webhook secret for verification (optional)
   webhookSecret: process.env.NGENIUS_WEBHOOK_SECRET,

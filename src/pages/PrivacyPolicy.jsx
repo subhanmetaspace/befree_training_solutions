@@ -102,7 +102,7 @@ const PrivacyPolicy = () => {
                   </h2>
                   <p>
                     If you have any questions about this Privacy Policy, please
-                    contact us at privacy@befree.com
+                    contact us at befreeeducation7107@gmail.com
                   </p>
                 </section>
               </div>

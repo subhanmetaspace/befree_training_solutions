@@ -9,7 +9,7 @@ const PDFDocument = require('pdfkit');
 
 const COMPANY_NAME = 'BeFree Training Solutions';
 const COMPANY_ADDRESS = process.env.COMPANY_ADDRESS || 'Dubai, United Arab Emirates';
-const COMPANY_EMAIL = process.env.COMPANY_EMAIL || 'info@befreetraining.net';
+const COMPANY_EMAIL = process.env.COMPANY_EMAIL || 'befreeeducation7107@gmail.com';
 const COMPANY_PHONE = process.env.COMPANY_PHONE || '+971 XX XXX XXXX';
 const COMPANY_TRN = process.env.COMPANY_TRN || ''; // Tax Registration Number if applicable
 

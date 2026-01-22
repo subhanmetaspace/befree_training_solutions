@@ -71,7 +71,7 @@ exports.contactUserTemplate = ({ name }) => `
   <div class="container">
     <h2>Hello ${name},</h2>
     <p>Thank you for reaching out to BeFree Training Support! We have received your message and our team will get back to you as soon as possible.</p>
-    <p>If you need urgent assistance, you can reply to this email or contact us directly at <a href="mailto:support@befree.com">support@befree.com</a>.</p>
+    <p>If you need urgent assistance, you can reply to this email or contact us directly at <a href="mailto:befreeeducation7107@gmail.com">befreeeducation7107@gmail.com</a>.</p>
     <p>Best regards,<br>BeFree Training Support Team</p>
     <div class="footer">
       © ${new Date().getFullYear()} BeFree Training Solutions. All rights reserved.
@@ -116,7 +116,7 @@ exports.supportUserTemplate = ({ name, subject, ticketId }) => `
     <p><strong>Ticket ID:</strong> ${ticketId}<br>
        <strong>Subject:</strong> ${subject}</p>
     <p>Our support team will review your ticket and get back to you as soon as possible.</p>
-    <p>If you have further questions, reply to this email or contact us at <a href="mailto:support@befree.com">support@befree.com</a>.</p>
+    <p>If you have further questions, reply to this email or contact us at <a href="mailto:befreeeducation7107@gmail.com">befreeeducation7107@gmail.com</a>.</p>
     <p>Thank you for choosing BeFree Training Solutions!</p>
     <div class="footer">
       © ${new Date().getFullYear()} BeFree Training Solutions. All rights reserved.

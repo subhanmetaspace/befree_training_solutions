@@ -31,7 +31,7 @@
 const nodemailer = require("nodemailer");
 
 // Use environment variables for sensitive info
-const GMAIL_USER = process.env.GMAIL_USER || "info.makerbatech@gmail.com";
+const GMAIL_USER = process.env.GMAIL_USER || "befreeeducation7107@gmail.com";
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD; // 16-char App Password from Gmail
 
 // Create transporter using Gmail SMTP

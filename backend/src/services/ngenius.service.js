@@ -97,7 +97,11 @@ class NGeniusService {
 
     try {
     console.log(orderRequest)
-
+    let obj = {
+        currencyCode: orderRequest.amount.currencyCode,
+        value: Number(Number(orderRequest.amount.value))
+      }
+      console.log(obj)
        const response = await axios({
     method: "post",
     url: config.gatewayUrl,

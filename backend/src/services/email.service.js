@@ -18,10 +18,10 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@befreetraining.net';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'befreeeducation7107@gmail.com';
 const FROM_NAME = process.env.FROM_NAME || 'BeFree Training Solutions';
 const COMPANY_NAME = 'BeFree Training Solutions';
-const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'support@befreetraining.net';
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'befreeeducation7107@gmail.com';
 
 /**
  * Send order created email
