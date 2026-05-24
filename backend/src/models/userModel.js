@@ -1,11 +1,11 @@
-const {DataTypes} = require("sequelize")
-const {sequelize} = require("../config/db")
+const { DataTypes } = require("sequelize");
+const { sequelize } = require("../config/db");
 
 const Users = sequelize.define(
   "users",
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -33,25 +33,25 @@ const Users = sequelize.define(
       allowNull: true,
     },
     is_verified: {
-      type: DataTypes.TINYINT.UNSIGNED,
+      type: DataTypes.SMALLINT,
       allowNull: false,
       defaultValue: 0,
     },
     status: {
-      type: DataTypes.TINYINT.UNSIGNED,
+      type: DataTypes.SMALLINT,
       allowNull: false,
       defaultValue: 1,
     },
     is_active: {
-      type: DataTypes.TINYINT.UNSIGNED,
+      type: DataTypes.SMALLINT,
       allowNull: false,
       defaultValue: 0,
     },
-    plan:{
-      type: DataTypes.INTEGER.UNSIGNED,
-      defaultValue:1
+    plan: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1,
     },
-    plan_purchase_date:{
+    plan_purchase_date: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
@@ -68,7 +68,7 @@ const Users = sequelize.define(
   },
   {
     tableName: "users",
-    timestamps: false, 
+    timestamps: false,
   }
 );
 

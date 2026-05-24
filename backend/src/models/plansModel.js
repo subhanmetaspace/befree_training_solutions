@@ -5,7 +5,7 @@ const Plans = sequelize.define(
   "plans",
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -14,28 +14,28 @@ const Plans = sequelize.define(
       allowNull: false,
     },
     price: {
-      type: DataTypes.STRING(10), // e.g., "100 AED/month"
+      type: DataTypes.STRING(10),
       allowNull: false,
     },
     period: {
-      type: DataTypes.ENUM("day","week","month","year"), // e.g., "month", "year"
+      type: DataTypes.STRING(10),
       allowNull: false,
-      defaultValue:"month"
+      defaultValue: "month",
     },
     description: {
       type: DataTypes.STRING(500),
       allowNull: false,
     },
     features: {
-      type: DataTypes.JSON, // store features as an array
+      type: DataTypes.JSONB,
       allowNull: false,
     },
-    cta:{
-        type:DataTypes.STRING(20)
+    cta: {
+      type: DataTypes.STRING(20),
     },
-    popular:{
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
+    popular: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     created_at: {
       type: DataTypes.DATE,
