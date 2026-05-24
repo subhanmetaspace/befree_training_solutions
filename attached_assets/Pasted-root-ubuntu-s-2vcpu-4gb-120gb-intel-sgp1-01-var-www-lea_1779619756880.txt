@@ -1,0 +1,31 @@
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/var/www/learnwithdigiweb.com/build# systemctl restart apache2
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/var/www/learnwithdigiweb.com/build# sudo chown -R www-data:www-data /var/www/learnwithdigiweb.com
+sudo chmod -R 755 /var/www/learnwithdigiweb.com
+sudo systemctl restart apache2
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/var/www/learnwithdigiweb.com/build# sudo certbot --apache -d learnwithdigiweb.com -d www.learnwithdigiweb.com
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+Requesting a certificate for learnwithdigiweb.com and www.learnwithdigiweb.com
+
+Certbot failed to authenticate some domains (authenticator: apache). The Certificate Authority reported these problems:
+  Domain: www.learnwithdigiweb.com
+  Type:   dns
+  Detail: DNS problem: NXDOMAIN looking up A for www.learnwithdigiweb.com - check that a DNS record exists for this domain; DNS problem: NXDOMAIN looking up AAAA for www.learnwithdigiweb.com - check that a DNS record exists for this domain
+
+Hint: The Certificate Authority failed to verify the temporary Apache configuration changes made by Certbot. Ensure that the listed domains point to this Apache server and that it is accessible from the internet.
+
+Some challenges have failed.
+Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /var/log/letsencrypt/letsencrypt.log or re-run Certbot with -v for more details.
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/var/www/learnwithdigiweb.com/build# cd /etc/apache2/sites-available/
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/etc/apache2/sites-available# ls
+000-default.conf                           forvonex-le-ssl.conf
+backend.inverseittechnologies-le-ssl.conf  forvonex.conf
+backend.inverseittechnologies.conf         inverseittechnologies-le-ssl.conf
+backend.learnwithdigiweb.com.conf          inverseittechnologies.conf
+backend.makerbatechllc-le-ssl.conf         learnwithdigiweb.com.conf
+backend.makerbatechllc.conf                makerbatechllc-le-ssl.conf
+crezrozedutechpvt-le-ssl.conf              makerbatechllc.conf
+crezrozedutechpvt.conf                     payment.inverseittechnologies-le-ssl.conf
+default-ssl.conf                           payment.inverseittechnologies.conf
+edupointech-le-ssl.conf                    vdaeduhub-le-ssl.conf
+edupointech.conf                           vdaeduhub.conf
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/etc/apache2/sites-available#
