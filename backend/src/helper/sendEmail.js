@@ -1,73 +1,40 @@
-const { google } = require("googleapis");
+const nodemailer = require("nodemailer");
 
-const GMAIL_USER         = process.env.GMAIL_USER;
-const GMAIL_CLIENT_ID    = process.env.GMAIL_CLIENT_ID;
-const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET;
-const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN;
+const GMAIL_USER = process.env.GMAIL_USER;
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 
-const missingVars = [];
-if (!GMAIL_USER)          missingVars.push("GMAIL_USER");
-if (!GMAIL_CLIENT_ID)     missingVars.push("GMAIL_CLIENT_ID");
-if (!GMAIL_CLIENT_SECRET) missingVars.push("GMAIL_CLIENT_SECRET");
-if (!GMAIL_REFRESH_TOKEN) missingVars.push("GMAIL_REFRESH_TOKEN");
-
-if (missingVars.length > 0) {
-    console.warn(`[sendEmail] WARNING: Missing env vars: ${missingVars.join(", ")}`);
+// Startup check — shows in pm2 logs so you can confirm values are loaded
+if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
+    console.error("[sendEmail] ERROR: GMAIL_USER or GMAIL_APP_PASSWORD missing from .env");
 } else {
-    console.log("[sendEmail] Gmail API (HTTPS) ready — no SMTP ports needed");
+    console.log(`[sendEmail] Gmail ready — user: ${GMAIL_USER} | pass length: ${GMAIL_APP_PASSWORD.length} chars`);
 }
 
-const getGmailClient = () => {
-    const oauth2Client = new google.auth.OAuth2(
-        GMAIL_CLIENT_ID,
-        GMAIL_CLIENT_SECRET,
-        "https://developers.google.com/oauthplayground"
-    );
-    oauth2Client.setCredentials({ refresh_token: GMAIL_REFRESH_TOKEN });
-    return google.gmail({ version: "v1", auth: oauth2Client });
-};
-
-const buildRawMessage = (to, subject, html) => {
-    const messageParts = [
-        `From: "Digiweb Star Solution" <${GMAIL_USER}>`,
-        `To: ${to}`,
-        `Subject: ${subject}`,
-        "MIME-Version: 1.0",
-        "Content-Type: text/html; charset=utf-8",
-        "",
-        html,
-    ];
-    const message = messageParts.join("\n");
-    return Buffer.from(message)
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
-};
+const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+        user: GMAIL_USER,
+        pass: GMAIL_APP_PASSWORD,
+    },
+});
 
 const sendEmail = async (to, subject, html) => {
-    if (missingVars.length > 0) {
-        console.error(`[sendEmail] Cannot send — missing: ${missingVars.join(", ")}`);
+    if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
+        console.error("[sendEmail] Cannot send — credentials missing from .env");
         return;
     }
     try {
-        const gmail = getGmailClient();
-        const raw = buildRawMessage(to, subject, html);
-        const res = await gmail.users.messages.send({
-            userId: "me",
-            requestBody: { raw },
+        const info = await transporter.sendMail({
+            from: `"Digiweb Star Solution" <${GMAIL_USER}>`,
+            to,
+            subject,
+            html,
         });
-        console.log(`[sendEmail] Sent to ${to} — Gmail Message ID: ${res.data.id}`);
+        console.log(`[sendEmail] Sent to ${to} — MessageId: ${info.messageId}`);
     } catch (err) {
-        console.error(`[sendEmail] Failed to send to ${to}`);
-        console.error(`[sendEmail] Error: ${err.message}`);
-        if (err.message?.includes("invalid_grant") || err.message?.includes("Invalid Credentials")) {
-            console.error("[sendEmail] >>> Refresh token is invalid or expired.");
-            console.error("[sendEmail] >>> Generate a new one at: https://developers.google.com/oauthplayground");
-        }
-        if (err.message?.includes("insufficient authentication")) {
-            console.error("[sendEmail] >>> Gmail API not enabled or OAuth consent not configured.");
-        }
+        console.error(`[sendEmail] Failed — Code: ${err.code} | Message: ${err.message}`);
     }
 };
 
