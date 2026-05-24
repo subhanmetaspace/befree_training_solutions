@@ -1,45 +1,72 @@
-const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
 
-const GMAIL_USER = process.env.GMAIL_USER;
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
+const GMAIL_USER         = process.env.GMAIL_USER;
+const GMAIL_CLIENT_ID    = process.env.GMAIL_CLIENT_ID;
+const GMAIL_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET;
+const GMAIL_REFRESH_TOKEN = process.env.GMAIL_REFRESH_TOKEN;
 
-if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-    console.error("[sendEmail] ERROR: GMAIL_USER or GMAIL_APP_PASSWORD not set in .env");
+const missingVars = [];
+if (!GMAIL_USER)          missingVars.push("GMAIL_USER");
+if (!GMAIL_CLIENT_ID)     missingVars.push("GMAIL_CLIENT_ID");
+if (!GMAIL_CLIENT_SECRET) missingVars.push("GMAIL_CLIENT_SECRET");
+if (!GMAIL_REFRESH_TOKEN) missingVars.push("GMAIL_REFRESH_TOKEN");
+
+if (missingVars.length > 0) {
+    console.warn(`[sendEmail] WARNING: Missing env vars: ${missingVars.join(", ")}`);
+} else {
+    console.log("[sendEmail] Gmail API (HTTPS) ready — no SMTP ports needed");
 }
 
-const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: {
-        user: GMAIL_USER,
-        pass: GMAIL_APP_PASSWORD,
-    },
-});
+const getGmailClient = () => {
+    const oauth2Client = new google.auth.OAuth2(
+        GMAIL_CLIENT_ID,
+        GMAIL_CLIENT_SECRET,
+        "https://developers.google.com/oauthplayground"
+    );
+    oauth2Client.setCredentials({ refresh_token: GMAIL_REFRESH_TOKEN });
+    return google.gmail({ version: "v1", auth: oauth2Client });
+};
+
+const buildRawMessage = (to, subject, html) => {
+    const messageParts = [
+        `From: "Digiweb Star Solution" <${GMAIL_USER}>`,
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        "MIME-Version: 1.0",
+        "Content-Type: text/html; charset=utf-8",
+        "",
+        html,
+    ];
+    const message = messageParts.join("\n");
+    return Buffer.from(message)
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+};
 
 const sendEmail = async (to, subject, html) => {
-    if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-        console.error("[sendEmail] Cannot send — GMAIL_USER or GMAIL_APP_PASSWORD missing from .env");
+    if (missingVars.length > 0) {
+        console.error(`[sendEmail] Cannot send — missing: ${missingVars.join(", ")}`);
         return;
     }
     try {
-        const info = await transporter.sendMail({
-            from: `"Digiweb Star Solution" <${GMAIL_USER}>`,
-            to,
-            subject,
-            html,
+        const gmail = getGmailClient();
+        const raw = buildRawMessage(to, subject, html);
+        const res = await gmail.users.messages.send({
+            userId: "me",
+            requestBody: { raw },
         });
-        console.log(`[sendEmail] Sent to ${to} — MessageId: ${info.messageId}`);
+        console.log(`[sendEmail] Sent to ${to} — Gmail Message ID: ${res.data.id}`);
     } catch (err) {
         console.error(`[sendEmail] Failed to send to ${to}`);
-        console.error(`[sendEmail] Code: ${err.code} | Message: ${err.message}`);
-        if (err.code === "ETIMEDOUT" || err.code === "ECONNREFUSED") {
-            console.error("[sendEmail] Port 465 is also blocked by your hosting provider.");
-            console.error("[sendEmail] You will need to ask them to unblock outgoing SMTP (port 465 or 587).");
+        console.error(`[sendEmail] Error: ${err.message}`);
+        if (err.message?.includes("invalid_grant") || err.message?.includes("Invalid Credentials")) {
+            console.error("[sendEmail] >>> Refresh token is invalid or expired.");
+            console.error("[sendEmail] >>> Generate a new one at: https://developers.google.com/oauthplayground");
         }
-        if (err.code === "EAUTH") {
-            console.error("[sendEmail] Wrong credentials — verify GMAIL_USER and GMAIL_APP_PASSWORD in .env");
-            console.error("[sendEmail] App Password must be generated at: https://myaccount.google.com/apppasswords");
+        if (err.message?.includes("insufficient authentication")) {
+            console.error("[sendEmail] >>> Gmail API not enabled or OAuth consent not configured.");
         }
     }
 };
