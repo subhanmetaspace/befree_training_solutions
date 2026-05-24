@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { Clock, Lock, Play, FileText, ChevronDown, ChevronUp, X, Search, Filter } from "lucide-react";
+import { Clock, Lock, Play, FileText, ChevronDown, ChevronUp, X, Search } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { AuthContext } from "../context/AuthContext";
 import axios from "axios";

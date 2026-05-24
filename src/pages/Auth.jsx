@@ -24,7 +24,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (token) navigate("/profile");
-  }, [token]);
+  }, [token, navigate]);
 
   const getDeviceInfo = () => {
     const ua = navigator.userAgent;
@@ -84,7 +84,7 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE}/user/register`, { full_name: fullName, email, password });
+      await axios.post(`${API_BASE}/user/register`, { full_name: fullName, email, password });
       toast({
         title: "Success!",
         description: "Account created successfully. Please verify your email via OTP.",
@@ -105,10 +105,12 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post(`${API_BASE}/user/verify`, { email, otp });
+      const response = await axios.post(`${API_BASE}/user/verify`, { email, otp });
+      const tokenFromApi = response?.data?.data?.token;
+      if (tokenFromApi) saveToken(tokenFromApi);
       toast({
         title: "Verified!",
-        description: "Your account has been verified successfully.",
+        description: "Your email has been verified. Welcome to Digiweb Star!",
       });
       navigate("/profile");
     } catch (error) {
@@ -116,6 +118,26 @@ const Auth = () => {
         variant: "destructive",
         title: "OTP Error",
         description: error.response?.data?.message || error.message || "Invalid OTP",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!email) {
+      toast({ variant: "destructive", title: "Error", description: "Email address is missing." });
+      return;
+    }
+    setLoading(true);
+    try {
+      await axios.post(`${API_BASE}/user/resend-otp`, { email });
+      toast({ title: "OTP Resent", description: "A new OTP has been sent to your email." });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Resend Failed",
+        description: error.response?.data?.message || "Could not resend OTP. Try again.",
       });
     } finally {
       setLoading(false);
@@ -154,7 +176,7 @@ const Auth = () => {
                   <Input
                     id="otp"
                     type="text"
-                    placeholder="Enter OTP"
+                    placeholder="Enter 6-digit OTP"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     required
@@ -162,8 +184,28 @@ const Auth = () => {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Verifying..." : "Verify OTP"}
+                  {loading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Verifying...</>
+                  ) : "Verify OTP"}
                 </Button>
+                <div className="text-center text-sm text-muted-foreground">
+                  Didn't receive the OTP?{" "}
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={loading}
+                    className="text-primary hover:underline font-medium disabled:opacity-50"
+                  >
+                    Resend OTP
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground text-center"
+                >
+                  ← Back to Sign In
+                </button>
               </form>
             ) : (
               <Tabs defaultValue="signin" className="w-full">

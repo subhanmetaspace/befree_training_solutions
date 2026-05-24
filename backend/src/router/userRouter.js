@@ -279,15 +279,18 @@ userRouter.post("/verify",async (req,res)=>{
       return res.status(400).json({success:false,message:'user not found'})
     }
     if(user.is_verified){
-      return res.status(400).json({success:false,message:"user is already verified"})
+      // Already verified — just return a token so they can log in
+      const token = jwt.sign({id:user.id,email:user.email},process.env.JWT_SECRET,{expiresIn:"1d"})
+      return res.status(200).json({success:true,message:"Email already verified",data:{token,name:user.full_name,email:user.email,id:user.id}})
     }
     if(user.otp!=otp){
       return res.status(400).json({success:false,message:"Invalid OTP"})
     }
     if(user.otp_expiration< new Date()){
-      return res.status(400).json({success:false,message:"OTP expired"})
+      return res.status(400).json({success:false,message:"OTP expired. Please request a new one."})
     }
     user.is_verified = 1;
+    user.is_active = 1;
     user.otp = null;
     user.otp_expiration = null;
     await user.save();
@@ -299,16 +302,38 @@ userRouter.post("/verify",async (req,res)=>{
       }
     })()
     await sendNotification({
-  user_id: user.id,
-  title: "Email Verified",
-  description: "Your email has been successfully verified. You can now log in.",
-  type: "achievement",
-});
-
-    return res.status(200).json({success:true,message:"Email verified successfully"})
+      user_id: user.id,
+      title: "Email Verified",
+      description: "Your email has been successfully verified. Welcome to Digiweb Star!",
+      type: "achievement",
+    });
+    const token = jwt.sign({id:user.id,email:user.email},process.env.JWT_SECRET,{expiresIn:"1d"})
+    return res.status(200).json({success:true,message:"Email verified successfully",data:{token,name:user.full_name,email:user.email,id:user.id}})
   }catch(error){
     console.error(error)
     return res.status(500).json({success:false,message:error.message})
+  }
+})
+
+userRouter.post("/resend-otp", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: "Email is required" });
+    const user = await Users.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (user.is_verified) return res.status(400).json({ success: false, message: "Email is already verified" });
+    const otp = generateOTP();
+    const otpExpiredAt = new Date(Date.now() + 10 * 60 * 1000);
+    user.otp = otp;
+    user.otp_expiration = otpExpiredAt;
+    await user.save();
+    (async () => {
+      try { await sendOtpMail(user, otp); } catch (err) { console.error("error resending otp", err); }
+    })();
+    return res.status(200).json({ success: true, message: "OTP resent to your email" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: err.message });
   }
 })
 
