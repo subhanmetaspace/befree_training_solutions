@@ -21,14 +21,14 @@ const TermsOfService = () => {
                 <section>
                   <h2 className="text-2xl font-bold text-foreground mb-4">1. Acceptance of Terms</h2>
                   <p>
-                    By accessing and using BeFree Training Solutions, you accept and agree to be bound by the terms and provision of this agreement.
+                    By accessing and using Digiweb Star Solution Pvt Ltd (learnwithdigiweb.com), you accept and agree to be bound by the terms and provision of this agreement.
                   </p>
                 </section>
 
                 <section>
                   <h2 className="text-2xl font-bold text-foreground mb-4">2. Use License</h2>
                   <p>
-                    Permission is granted to temporarily access the materials (information or software) on BeFree for personal, non-commercial transitory viewing only.
+                    Permission is granted to temporarily access the materials (information or software) on learnwithdigiweb.com for personal, non-commercial transitory viewing only.
                   </p>
                 </section>
 
@@ -42,7 +42,7 @@ const TermsOfService = () => {
                 <section>
                   <h2 className="text-2xl font-bold text-foreground mb-4">4. Intellectual Property</h2>
                   <p>
-                    The content, organization, graphics, design, and other matters related to BeFree are protected under applicable copyrights and other proprietary laws.
+                    The content, organization, graphics, design, and other matters related to Digiweb Star Solution Pvt Ltd are protected under applicable copyrights and other proprietary laws.
                   </p>
                 </section>
 
@@ -63,14 +63,14 @@ const TermsOfService = () => {
                 <section>
                   <h2 className="text-2xl font-bold text-foreground mb-4">7. Limitation of Liability</h2>
                   <p>
-                    In no event shall BeFree or its suppliers be liable for any damages arising out of the use or inability to use the materials on BeFree.
+                    In no event shall Digiweb Star Solution Pvt Ltd or its suppliers be liable for any damages arising out of the use or inability to use the materials on learnwithdigiweb.com.
                   </p>
                 </section>
 
                 <section>
                   <h2 className="text-2xl font-bold text-foreground mb-4">8. Contact Us</h2>
                   <p>
-                    If you have any questions about these Terms, please contact us at support@befree.com
+                    If you have any questions about these Terms, please contact us at info.digiwebstar123@gmail.com or call +91 97690 14231.
                   </p>
                 </section>
               </div>
