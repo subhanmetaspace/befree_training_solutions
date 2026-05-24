@@ -1,0 +1,65 @@
+9|digiweb- | (sequelize) Warning: PostgresSQL does not support 'INTEGER' with LENGTH, UNSIGNED or ZEROFILL. Plain 'INTEGER' will be used instead.
+9|digiweb- | >> Check: http://www.postgresql.org/docs/9.4/static/datatype.html
+9|digiweb- | Database connection error: ConnectionRefusedError [SequelizeConnectionRefusedError]
+9|digiweb- |     at Client._connectionCallback (/opt/befree_training_solutions/backend/node_modules/sequelize/lib/dialects/postgres/connection-manager.js:133:24)
+9|digiweb- |     at Client._handleErrorWhileConnecting (/opt/befree_training_solutions/backend/node_modules/pg/lib/client.js:397:19)
+9|digiweb- |     at Client._handleErrorEvent (/opt/befree_training_solutions/backend/node_modules/pg/lib/client.js:407:19)
+9|digiweb- |     at Connection.emit (node:events:524:28)
+9|digiweb- |     at Socket.reportStreamError (/opt/befree_training_solutions/backend/node_modules/pg/lib/connection.js:56:12)
+9|digiweb- |     at Socket.emit (node:events:524:28)
+9|digiweb- |     at emitErrorNT (node:internal/streams/destroy:169:8)
+9|digiweb- |     at emitErrorCloseNT (node:internal/streams/destroy:128:3)
+9|digiweb- |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+9|digiweb- |   parent: AggregateError [ECONNREFUSED]:
+9|digiweb- |       at internalConnectMultiple (node:net:1122:18)
+9|digiweb- |       at afterConnectMultiple (node:net:1689:7) {
+9|digiweb- |     code: 'ECONNREFUSED',
+9|digiweb- |     [errors]: [ [Error], [Error] ]
+9|digiweb- |   },
+9|digiweb- |   original: AggregateError [ECONNREFUSED]:
+9|digiweb- |       at internalConnectMultiple (node:net:1122:18)
+9|digiweb- |       at afterConnectMultiple (node:net:1689:7) {
+9|digiweb- |     code: 'ECONNREFUSED',
+9|digiweb- |     [errors]: [ [Error], [Error] ]
+9|digiweb- |   }
+9|digiweb- | }
+9|digiweb- | (sequelize) Warning: PostgresSQL does not support 'INTEGER' with LENGTH, UNSIGNED or ZEROFILL. Plain 'INTEGER' will be used instead.
+9|digiweb- | >> Check: http://www.postgresql.org/docs/9.4/static/datatype.html
+9|digiweb- | Database connection error: ConnectionRefusedError [SequelizeConnectionRefusedError]
+9|digiweb- |     at Client._connectionCallback (/opt/befree_training_solutions/backend/node_modules/sequelize/lib/dialects/postgres/connection-manager.js:133:24)
+9|digiweb- |     at Client._handleErrorWhileConnecting (/opt/befree_training_solutions/backend/node_modules/pg/lib/client.js:397:19)
+9|digiweb- |     at Client._handleErrorEvent (/opt/befree_training_solutions/backend/node_modules/pg/lib/client.js:407:19)
+9|digiweb- |     at Connection.emit (node:events:524:28)
+9|digiweb- |     at Socket.reportStreamError (/opt/befree_training_solutions/backend/node_modules/pg/lib/connection.js:56:12)
+9|digiweb- |     at Socket.emit (node:events:524:28)
+9|digiweb- |     at emitErrorNT (node:internal/streams/destroy:169:8)
+9|digiweb- |     at emitErrorCloseNT (node:internal/streams/destroy:128:3)
+9|digiweb- |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+9|digiweb- |   parent: AggregateError [ECONNREFUSED]:
+9|digiweb- |       at internalConnectMultiple (node:net:1122:18)
+9|digiweb- |       at afterConnectMultiple (node:net:1689:7) {
+9|digiweb- |     code: 'ECONNREFUSED',
+9|digiweb- |     [errors]: [ [Error], [Error] ]
+9|digiweb- |   },
+9|digiweb- |   original: AggregateError [ECONNREFUSED]:
+9|digiweb- |       at internalConnectMultiple (node:net:1122:18)
+9|digiweb- |       at afterConnectMultiple (node:net:1689:7) {
+9|digiweb- |     code: 'ECONNREFUSED',
+9|digiweb- |     [errors]: [ [Error], [Error] ]
+9|digiweb- |   }
+9|digiweb- | }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
