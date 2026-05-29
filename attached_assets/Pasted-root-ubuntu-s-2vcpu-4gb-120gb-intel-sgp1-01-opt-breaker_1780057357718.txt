@@ -1,0 +1,62 @@
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/breakerevents# sudo nano /etc/postgresql/16/main/pg_hba.conf
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/breakerevents# sudo nano /etc/postgresql/16/main/pg_hba.conf
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/breakerevents# sudo systemctl restart postgresql
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/breakerevents# psql -h localhost -U digiweb_user -d digiweb_db -c "SELECT 1;"
+psql: error: connection to server at "localhost" (::1), port 5432 failed: Connection refused
+        Is the server running on that host and accepting TCP/IP connections?
+connection to server at "localhost" (127.0.0.1), port 5432 failed: Connection refused
+        Is the server running on that host and accepting TCP/IP connections?
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/breakerevents# pg_lsclusters
+Ver Cluster Port Status Owner    Data directory              Log file
+16  main    5433 online postgres /var/lib/postgresql/16/main /var/log/postgresql/postgresql-16-main.log
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/breakerevents# ss -tlnp | grep 5432
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/breakerevents# cd /opt/befree_training_solutions/
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/befree_training_solutions# ls
+README.md  attached_assets  backend  backend-ngenius-integration  build  package-lock.json  package.json  postcss.config.js  public  replit.md  src  tailwind.config.js
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/befree_training_solutions# cd backend
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/befree_training_solutions/backend# ls
+index.js  node_modules  package-lock.json  package.json  src  uploads
+
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/befree_training_solutions/backend# ss -tlnp | grep 5433
+LISTEN 0      200        127.0.0.1:5433       0.0.0.0:*    users:(("postgres",pid=1379658,fd=7))
+LISTEN 0      200            [::1]:5433          [::]:*    users:(("postgres",pid=1379658,fd=6))
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/befree_training_solutions/backend# grep -n "listen_addresses" /etc/postgresql/16/main/postgresql.conf
+60:listen_addresses = 'localhost'               # what IP address(es) to listen on;
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/befree_training_solutions/backend# sudo -u postgres psql -c "\l"
+                                                                    List of databases
+     Name      |       Owner        | Encoding | Locale Provider | Collate |  Ctype  | ICU Locale | ICU Rules |             Access privileges
+---------------+--------------------+----------+-----------------+---------+---------+------------+-----------+-------------------------------------------
+ breakerevents | breakerevents_user | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | =Tc/breakerevents_user                   +
+               |                    |          |                 |         |         |            |           | breakerevents_user=CTc/breakerevents_user
+ crezroz_db    | postgres           | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | =Tc/postgres                             +
+               |                    |          |                 |         |         |            |           | postgres=CTc/postgres                    +
+               |                    |          |                 |         |         |            |           | eduadmin=CTc/postgres
+ digiweb_db    | digiweb_user       | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | =Tc/digiweb_user                         +
+               |                    |          |                 |         |         |            |           | digiweb_user=CTc/digiweb_user
+ edupoint_db   | postgres           | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | =Tc/postgres                             +
+               |                    |          |                 |         |         |            |           | postgres=CTc/postgres                    +
+               |                    |          |                 |         |         |            |           | eduadmin=CTc/postgres
+ openwearables | openwearables      | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | =Tc/openwearables                        +
+               |                    |          |                 |         |         |            |           | openwearables=CTc/openwearables
+ postgres      | postgres           | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           |
+ template0     | postgres           | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | =c/postgres                              +
+               |                    |          |                 |         |         |            |           | postgres=CTc/postgres
+ template1     | postgres           | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | =c/postgres                              +
+               |                    |          |                 |         |         |            |           | postgres=CTc/postgres
+ vdaeduhub_db  | postgres           | UTF8     | libc            | C.UTF-8 | C.UTF-8 |            |           | =Tc/postgres                             +
+               |                    |          |                 |         |         |            |           | postgres=CTc/postgres                    +
+               |                    |          |                 |         |         |            |           | eduadmin=CTc/postgres
+(9 rows)
+
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/befree_training_solutions/backend# sudo -u postgres psql -c "\du"
+
+                                  List of roles
+     Role name      |                         Attributes
+--------------------+------------------------------------------------------------
+ breakerevents_user |
+ digiweb_user       |
+ eduadmin           |
+ openwearables      |
+ postgres           | Superuser, Create role, Create DB, Replication, Bypass RLS
+
+root@ubuntu-s-2vcpu-4gb-120gb-intel-sgp1-01:/opt/befree_training_solutions/backend#
