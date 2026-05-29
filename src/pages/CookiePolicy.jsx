@@ -66,7 +66,7 @@ const CookiePolicy = () => {
                 <section>
                   <h2 className="text-2xl font-bold text-foreground mb-4">5. Contact Us</h2>
                   <p>
-                    If you have any questions about our use of cookies, please contact us at <a href="mailto:info.digiwebstar123@gmail.com" className="text-primary hover:underline">info.digiwebstar123@gmail.com</a> or call +91 97690 14231.
+                    If you have any questions about our use of cookies, please contact us at <a href="mailto:info.digiwebstar123@gmail.com" className="text-primary hover:underline">info.digiwebstar123@gmail.com</a> or call +91 81086 73614.
                   </p>
                 </section>
               </div>

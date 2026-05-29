@@ -68,7 +68,7 @@ exports.contactUserTemplate = ({ name }) => `
   <div class="container">
     <h2>Hello ${name},</h2>
     <p>Thank you for reaching out to Digiweb Star Support! We have received your message and our team will get back to you as soon as possible.</p>
-    <p>If you need urgent assistance, contact us at <a href="mailto:info.digiwebstar123@gmail.com">info.digiwebstar123@gmail.com</a> or call <a href="tel:+919769014231">+91 97690 14231</a>.</p>
+    <p>If you need urgent assistance, contact us at <a href="mailto:info.digiwebstar123@gmail.com">info.digiwebstar123@gmail.com</a> or call <a href="tel:+918108673614">+91 81086 73614</a>.</p>
     <p>Best regards,<br>Digiweb Star Support Team</p>
     <div class="footer">
       © ${new Date().getFullYear()} Digiweb Star Solution Pvt Ltd. All rights reserved. | learnwithdigiweb.com

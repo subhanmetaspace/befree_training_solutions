@@ -70,7 +70,7 @@ const TermsOfService = () => {
                 <section>
                   <h2 className="text-2xl font-bold text-foreground mb-4">8. Contact Us</h2>
                   <p>
-                    If you have any questions about these Terms, please contact us at info.digiwebstar123@gmail.com or call +91 97690 14231.
+                    If you have any questions about these Terms, please contact us at info.digiwebstar123@gmail.com or call +91 81086 73614.
                   </p>
                 </section>
               </div>

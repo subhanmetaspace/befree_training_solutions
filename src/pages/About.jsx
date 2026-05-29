@@ -131,7 +131,7 @@ const About = () => {
                 <div>
                   <p className="font-semibold text-foreground mb-1">Contact</p>
                   <p>📧 info.digiwebstar123@gmail.com</p>
-                  <p className="mt-1">📞 +91 97690 14231</p>
+                  <p className="mt-1">📞 +91 81086 73614</p>
                   <p className="mt-1">🌐 learnwithdigiweb.com</p>
                 </div>
               </div>

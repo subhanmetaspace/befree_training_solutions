@@ -157,8 +157,8 @@ const Contact = () => {
                       </div>
                       <div>
                         <h3 className="font-semibold text-foreground mb-1">Phone / WhatsApp</h3>
-                        <a href="tel:+919769014231" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                          +91 97690 14231
+                        <a href="tel:+918108673614" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                          +91 81086 73614
                         </a>
                       </div>
                     </div>
@@ -195,10 +195,10 @@ const Contact = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       Want to talk directly about course admissions or fees? Call or WhatsApp us now!
                     </p>
-                    <a href="tel:+919769014231">
+                    <a href="tel:+918108673614">
                       <Button className="w-full bg-primary text-background hover:bg-primary/90 glow-cyan">
                         <Phone className="w-4 h-4 mr-2" />
-                        Call Now: +91 97690 14231
+                        Call Now: +91 81086 73614
                       </Button>
                     </a>
                   </CardContent>

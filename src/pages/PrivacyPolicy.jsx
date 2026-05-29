@@ -102,7 +102,7 @@ const PrivacyPolicy = () => {
                   </h2>
                   <p>
                     If you have any questions about this Privacy Policy, please
-                    contact us at <a href="mailto:info.digiwebstar123@gmail.com" className="text-primary hover:underline">info.digiwebstar123@gmail.com</a> or call +91 97690 14231.
+                    contact us at <a href="mailto:info.digiwebstar123@gmail.com" className="text-primary hover:underline">info.digiwebstar123@gmail.com</a> or call +91 81086 73614.
                   </p>
                 </section>
               </div>
