@@ -11,6 +11,7 @@
   "author": "Digiweb Star Solution Pvt Ltd",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.16.1",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
     "cookie-parser": "^1.4.7",
@@ -23,6 +24,7 @@
     "multer": "^2.0.2",
     "nodemailer": "^7.0.9",
     "nodemon": "^3.1.10",
+    "pdfkit": "^0.18.0",
     "pg": "^8.13.3",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.7"
