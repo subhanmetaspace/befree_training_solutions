@@ -163,7 +163,7 @@ const Classes = () => {
                           <Clock className="w-4 h-4" />
                           {classItem.duration_minutes || 60} min
                         </div>
-                        {classItem.price && <Badge variant="secondary">AED {classItem.price}</Badge>}
+                        {classItem.price && <Badge variant="secondary">₹{Number(classItem.price).toLocaleString('en-IN')}</Badge>}
                       </div>
                       <Button
                         onClick={() => scheduleClass(classItem.id)}
@@ -203,7 +203,7 @@ const Classes = () => {
                           <Clock className="w-4 h-4" />
                           {classItem.duration_minutes || 60} min
                         </div>
-                        {classItem.price && <Badge variant="secondary">AED {classItem.price}</Badge>}
+                        {classItem.price && <Badge variant="secondary">₹{Number(classItem.price).toLocaleString('en-IN')}</Badge>}
                       </div>
                       <Button
                         onClick={() => downloadClass(classItem.download_url)}

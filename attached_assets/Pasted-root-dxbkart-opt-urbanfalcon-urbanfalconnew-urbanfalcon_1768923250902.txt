@@ -1,0 +1,504 @@
+root@dxbkart:/opt/urbanfalcon/urbanfalconnew/urbanfalconnew/server# cat routes.ts
+import type { Express, Request, Response, NextFunction } from "express";
+import { type Server } from "http";
+import { storage } from "./storage";
+import { insertInquirySchema, loginSchema, registerSchema, createOrderSchema } from "@shared/schema";
+import { fromError } from "zod-validation-error";
+import bcrypt from "bcryptjs";
+import axios from "axios";
+import { sendOrderCreatedEmail, sendPaymentSuccessEmail, sendPaymentFailedEmail, sendInvoiceEmail } from "./email";
+import { generateInvoicePDF, generateInvoiceHTML } from "./invoice";
+import { lookupPrice } from "@shared/pricing";
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        email: string;
+        name: string;
+      };
+      sessionId?: string;
+    }
+  }
+}
+
+const SESSION_COOKIE = "session_id";
+const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
+async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const sessionId = req.cookies?.[SESSION_COOKIE];
+
+  if (!sessionId) {
+    return next();
+  }
+
+  try {
+    const session = await storage.getSession(sessionId);
+    if (session) {
+      const user = await storage.getUser(session.userId);
+      if (user) {
+        req.user = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        };
+        req.sessionId = sessionId;
+      }
+    }
+  } catch (error) {
+    console.error("Auth middleware error:", error);
+  }
+
+  next();
+}
+
+export async function registerRoutes(
+  httpServer: Server,
+  app: Express
+): Promise<Server> {
+
+  app.use(authMiddleware);
+
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const result = registerSchema.safeParse(req.body);
+
+      if (!result.success) {
+        const validationError = fromError(result.error);
+        return res.status(400).json({
+          error: "Validation failed",
+          details: validationError.toString()
+        });
+      }
+
+      const { email, password, name } = result.data;
+
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await storage.createUser({
+        email,
+        password: hashedPassword,
+        name,
+      });
+
+      const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+      const session = await storage.createSession(user.id, expiresAt);
+
+      res.cookie(SESSION_COOKIE, session.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: SESSION_DURATION_MS,
+      });
+
+      return res.status(201).json({
+        user: { id: user.id, email: user.email, name: user.name },
+      });
+    } catch (error) {
+      console.error("Error registering user:", error);
+      return res.status(500).json({ error: "Failed to register" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const result = loginSchema.safeParse(req.body);
+
+      if (!result.success) {
+        const validationError = fromError(result.error);
+        return res.status(400).json({
+          error: "Validation failed",
+          details: validationError.toString()
+        });
+      }
+
+      const { email, password } = result.data;
+
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+
+      storage.deleteExpiredSessions().catch(err =>
+        console.error("Error cleaning expired sessions:", err)
+      );
+
+      const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+      const session = await storage.createSession(user.id, expiresAt);
+
+      res.cookie(SESSION_COOKIE, session.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: SESSION_DURATION_MS,
+      });
+
+      return res.json({
+        user: { id: user.id, email: user.email, name: user.name },
+      });
+    } catch (error) {
+      console.error("Error logging in:", error);
+      return res.status(500).json({ error: "Failed to login" });
+    }
+  });
+
+  app.post("/api/auth/logout", async (req, res) => {
+    try {
+      const sessionId = req.cookies?.[SESSION_COOKIE];
+
+      if (sessionId) {
+        await storage.deleteSession(sessionId);
+      }
+
+      res.clearCookie(SESSION_COOKIE);
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Error logging out:", error);
+      return res.status(500).json({ error: "Failed to logout" });
+    }
+  });
+
+  app.get("/api/auth/session", async (req, res) => {
+    if (req.user) {
+      return res.json({ user: req.user });
+    }
+    return res.json({ user: null });
+  });
+
+  app.post("/api/inquiries", async (req, res) => {
+    try {
+      const result = insertInquirySchema.safeParse(req.body);
+
+      if (!result.success) {
+        const validationError = fromError(result.error);
+        return res.status(400).json({
+          error: "Validation failed",
+          details: validationError.toString()
+        });
+      }
+
+      const inquiry = await storage.createInquiry(result.data);
+      return res.status(201).json(inquiry);
+    } catch (error) {
+      console.error("Error creating inquiry:", error);
+      return res.status(500).json({ error: "Failed to create inquiry" });
+    }
+  });
+
+  app.get("/api/inquiries", async (req, res) => {
+    try {
+      const inquiries = await storage.getInquiries();
+      return res.json(inquiries);
+    } catch (error) {
+      console.error("Error fetching inquiries:", error);
+      return res.status(500).json({ error: "Failed to fetch inquiries" });
+    }
+  });
+
+  app.get("/api/inquiries/:id", async (req, res) => {
+    try {
+      const inquiry = await storage.getInquiry(req.params.id);
+      if (!inquiry) {
+        return res.status(404).json({ error: "Inquiry not found" });
+      }
+      return res.json(inquiry);
+    } catch (error) {
+      console.error("Error fetching inquiry:", error);
+      return res.status(500).json({ error: "Failed to fetch inquiry" });
+    }
+  });
+
+  app.post("/api/orders", async (req, res) => {
+    try {
+      const result = createOrderSchema.safeParse(req.body);
+
+      if (!result.success) {
+        const validationError = fromError(result.error);
+        return res.status(400).json({
+          error: "Validation failed",
+          details: validationError.toString()
+        });
+      }
+
+      const { serviceName } = result.data;
+
+      const serviceParts = serviceName.split(" - ");
+      const baseServiceName = serviceParts[0];
+      const tierName = serviceParts[1] || serviceParts[0];
+
+      const pricingLookup = lookupPrice(baseServiceName, tierName);
+
+      if (!pricingLookup) {
+        return res.status(400).json({
+          error: "Invalid service or tier",
+          details: "The selected service or tier is not available. Please select from our pricing page."
+        });
+      }
+
+      const orderData = {
+        ...result.data,
+        amount: pricingLookup.price.toString(),
+        userId: req.user?.id,
+      };
+
+      const order = await storage.createOrder(orderData);
+
+      sendOrderCreatedEmail(order).catch(err =>
+        console.error("Error sending order created email:", err)
+      );
+
+      const { paymentUrl, gatewayOrderId } = await generatePaymentUrl(order);
+
+      if (gatewayOrderId) {
+        await storage.updateOrder(order.id, { paymentGatewayOrderId: gatewayOrderId });
+      }
+
+      return res.status(201).json({
+        order: { ...order, paymentGatewayOrderId: gatewayOrderId },
+        paymentUrl,
+      });
+    } catch (error) {
+      console.error("Error creating order:", error);
+      return res.status(500).json({ error: "Failed to create order" });
+    }
+  });
+
+  app.get("/api/orders/:id", async (req, res) => {
+    try {
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      return res.json(order);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      return res.status(500).json({ error: "Failed to fetch order" });
+    }
+  });
+
+  app.get("/api/orders/number/:orderNumber", async (req, res) => {
+    try {
+      const order = await storage.getOrderByNumber(req.params.orderNumber);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+      return res.json(order);
+    } catch (error) {
+      console.error("Error fetching order:", error);
+      return res.status(500).json({ error: "Failed to fetch order" });
+    }
+  });
+
+  app.get("/api/orders", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      const orders = await storage.getOrdersByUser(req.user.id);
+      return res.json(orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      return res.status(500).json({ error: "Failed to fetch orders" });
+    }
+  });
+
+  app.post("/api/orders/:id/initiate-payment", async (req, res) => {
+    try {
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      if (order.paymentStatus === "paid") {
+        return res.status(400).json({ error: "Order already paid" });
+      }
+
+      const { paymentUrl, gatewayOrderId } = await generatePaymentUrl(order);
+
+      if (gatewayOrderId && !order.paymentGatewayOrderId) {
+        await storage.updateOrder(order.id, { paymentGatewayOrderId: gatewayOrderId });
+      }
+
+      return res.json({
+        paymentUrl,
+        order: { ...order, paymentGatewayOrderId: gatewayOrderId || order.paymentGatewayOrderId },
+      });
+    } catch (error) {
+      console.error("Error initiating payment:", error);
+      return res.status(500).json({ error: "Failed to initiate payment" });
+    }
+  });
+
+  app.post("/api/orders/verify-payment", async (req, res) => {
+    try {
+      const { orderId, paymentId, paymentSignature, status, method } = req.body;
+
+      if (!orderId) {
+        return res.status(400).json({ error: "Order ID is required" });
+      }
+
+      const order = await storage.getOrder(orderId);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      const isSuccess = status === "success" || status === "paid";
+
+      const updatedOrder = await storage.updateOrder(order.id, {
+        paymentGatewayPaymentId: paymentId,
+        paymentGatewaySignature: paymentSignature,
+        paymentStatus: isSuccess ? "paid" : "failed",
+        paymentMethod: method,
+        status: isSuccess ? "confirmed" : "payment_failed",
+        paidAt: isSuccess ? new Date() : undefined,
+      });
+
+      if (!updatedOrder) {
+        return res.status(500).json({ error: "Failed to update order" });
+      }
+
+      if (isSuccess) {
+        sendPaymentSuccessEmail(updatedOrder).catch(err =>
+          console.error("Error sending payment success email:", err)
+        );
+
+        const invoiceBuffer = await generateInvoicePDF(updatedOrder);
+        sendInvoiceEmail(updatedOrder, invoiceBuffer).catch(err =>
+          console.error("Error sending invoice email:", err)
+        );
+      } else {
+        sendPaymentFailedEmail(updatedOrder, req.body.reason).catch(err =>
+          console.error("Error sending payment failed email:", err)
+        );
+      }
+
+      return res.json({
+        success: isSuccess,
+        order: updatedOrder,
+      });
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      return res.status(500).json({ error: "Failed to verify payment" });
+    }
+  });
+
+  app.get("/api/orders/:id/invoice", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      if (order.userId !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const html = generateInvoiceHTML(order);
+      res.setHeader("Content-Type", "text/html");
+      return res.send(html);
+    } catch (error) {
+      console.error("Error generating invoice:", error);
+      return res.status(500).json({ error: "Failed to generate invoice" });
+    }
+  });
+
+  app.get("/api/orders/:id/invoice/download", async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      const order = await storage.getOrder(req.params.id);
+      if (!order) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      if (order.userId !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const pdfBuffer = await generateInvoicePDF(order);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="invoice-${order.orderNumber}.pdf"`);
+      res.setHeader("Content-Length", pdfBuffer.length);
+      return res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      return res.status(500).json({ error: "Failed to download invoice" });
+    }
+  });
+
+  return httpServer;
+}
+
+async function generatePaymentUrl(order: { id: string; orderNumber: string; amount: string; currency: string; customerEmail: string; customerName: string }): Promise<{ paymentUrl: string; gatewayOrderId?: string }> {
+  const baseUrl = process.env.PAYMENT_GATEWAY_URL;
+  const identityApiUrl = process.env.IDENTITY_API_URL;
+  const networkGatewayApiKey = process.env.NETWORK_PG_KEY;
+  const redirectUrl = process.env.REDIRECT_URL;
+  const cancelUrl = process.env.CANCEL_URL;
+  console.log(baseUrl,identityApiUrl,networkGatewayApiKey);
+  if (!baseUrl || !identityApiUrl || !networkGatewayApiKey) {
+    const appUrl = process.env.REPL_SLUG
+      ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`
+      : "http://localhost:5000";
+    return { paymentUrl: `${appUrl}/payment?orderId=${order.id}&orderNumber=${order.orderNumber}` };
+  }
+
+  const { data } = await axios({
+    method: "post",
+    url: identityApiUrl,
+    headers: {
+      "Content-Type": "application/vnd.ni-identity.v1+json",
+      Authorization: `Basic ${networkGatewayApiKey}`
+    },
+    data: {
+      grant_type: "client_credentials"
+    }
+  });
+
+  const { access_token } = data;
+
+  const { data: orderData } = await axios({
+    method: "post",
+    url: baseUrl,
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+      "Content-Type": "application/vnd.ni-payment.v2+json",
+      Accept: "application/vnd.ni-payment.v2+json",
+    },
+    data: {
+      action: "PURCHASE",
+      amount: {
+        currencyCode: order.currency,
+        value: Number(Number(order.amount) * 100)
+      },
+      merchantOrderReference: order.orderNumber,
+      merchantAttributes: {
+        redirectUrl: redirectUrl || `${process.env.APP_URL || ""}/payment/callback`,
+        skipConfirmationPage: true,
+        cancelUrl: cancelUrl || `${process.env.APP_URL || ""}/payment/cancelled`,
+      }
+    }
+  });
+
+  const paymentUrl = orderData?._links?.payment?.href || "";
+  const gatewayOrderId = orderData?.reference || orderData?._id;
+
+  return { paymentUrl, gatewayOrderId };
+}
+root@dxbkart:/opt/urbanfalcon/urbanfalconnew/urban

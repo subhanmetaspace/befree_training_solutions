@@ -1,0 +1,32 @@
+9|digiweb-backend  | register api called
+9|digiweb-backend  | login api called
+9|digiweb-backend  | register api called
+9|digiweb-backend  | send notification function called
+9|digiweb-backend  | Notification sent: ID 2 for user 2
+9|digiweb-backend  | Failed to send email: Error: Connection timeout
+9|digiweb-backend  |     at SMTPConnection._formatError (/opt/befree_training_solutions/backend/node_modules/nodemailer/lib/smtp-connection/index.js:809:19)
+9|digiweb-backend  |     at SMTPConnection._onError (/opt/befree_training_solutions/backend/node_modules/nodemailer/lib/smtp-connection/index.js:795:20)
+9|digiweb-backend  |     at Timeout.<anonymous> (/opt/befree_training_solutions/backend/node_modules/nodemailer/lib/smtp-connection/index.js:237:22)
+9|digiweb-backend  |     at listOnTimeout (node:internal/timers:581:17)
+9|digiweb-backend  |     at process.processTimers (node:internal/timers:519:7) {
+9|digiweb-backend  |   code: 'ETIMEDOUT',
+9|digiweb-backend  |   command: 'CONN'
+9|digiweb-backend  | }
+9|digiweb-backend  | Failed to send email: Error: Connection timeout
+9|digiweb-backend  |     at SMTPConnection._formatError (/opt/befree_training_solutions/backend/node_modules/nodemailer/lib/smtp-connection/index.js:809:19)
+9|digiweb-backend  |     at SMTPConnection._onError (/opt/befree_training_solutions/backend/node_modules/nodemailer/lib/smtp-connection/index.js:795:20)
+9|digiweb-backend  |     at Timeout.<anonymous> (/opt/befree_training_solutions/backend/node_modules/nodemailer/lib/smtp-connection/index.js:237:22)
+9|digiweb-backend  |     at listOnTimeout (node:internal/timers:581:17)
+9|digiweb-backend  |     at process.processTimers (node:internal/timers:519:7) {
+9|digiweb-backend  |   code: 'ETIMEDOUT',
+9|digiweb-backend  |   command: 'CONN'
+9|digiweb-backend  | }
+9|digiweb-backend  | Failed to send email: Error: Connection timeout
+9|digiweb-backend  |     at SMTPConnection._formatError (/opt/befree_training_solutions/backend/node_modules/nodemailer/lib/smtp-connection/index.js:809:19)
+9|digiweb-backend  |     at SMTPConnection._onError (/opt/befree_training_solutions/backend/node_modules/nodemailer/lib/smtp-connection/index.js:795:20)
+9|digiweb-backend  |     at Timeout.<anonymous> (/opt/befree_training_solutions/backend/node_modules/nodemailer/lib/smtp-connection/index.js:237:22)
+9|digiweb-backend  |     at listOnTimeout (node:internal/timers:581:17)
+9|digiweb-backend  |     at process.processTimers (node:internal/timers:519:7) {
+9|digiweb-backend  |   code: 'ETIMEDOUT',
+9|digiweb-backend  |   command: 'CONN'
+9|digiweb-backend  | }

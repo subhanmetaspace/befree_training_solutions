@@ -158,7 +158,7 @@ const PaymentPage = () => {
     phone: "",
   });
 
-  const [paymentMethod, setPaymentMethod] = useState("online");
+  const [paymentMethod, setPaymentMethod] = useState("card");
   const [cardInfo, setCardInfo] = useState({
     cardNumber: "",
     expiry: "",
@@ -443,7 +443,7 @@ const PaymentPage = () => {
 
               <FormSection title="Payment Method" icon={Wallet}>
                 <div className="space-y-6">
-                  {/* <div className="flex gap-4">
+                  <div className="flex gap-4">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("card")}
@@ -461,7 +461,7 @@ const PaymentPage = () => {
                         <CardIcons />
                       </div>
                     </button>
-                  </div> */}
+                  </div>
 
                   <div className="flex gap-4">
                     <button
@@ -547,7 +547,7 @@ const PaymentPage = () => {
                   {paymentMethod === "online" && (
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-sm text-blue-800">
-                        You will be redirected to secure payment page to complete the transaction.
+                        You will be redirected to your bank's secure payment page to complete the transaction.
                       </p>
                     </div>
                   )}
@@ -585,20 +585,20 @@ const PaymentPage = () => {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Subtotal</span>
                       <span className="font-medium">
-                        {billing === "year" ? yearlyTotal : monthlyTotal} AED
+                        ₹{(billing === "year" ? yearlyTotal : monthlyTotal).toLocaleString('en-IN')}
                       </span>
                     </div>
 
                     {billing === "year" && (
                       <div className="flex justify-between text-sm text-green-600 bg-green-50 p-2 rounded-lg">
                         <span>Annual Discount (20%)</span>
-                        <span className="font-medium">-{yearlySavings} AED</span>
+                        <span className="font-medium">-₹{yearlySavings.toLocaleString('en-IN')}</span>
                       </div>
                     )}
 
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Tax</span>
-                      <span className="font-medium">0 AED</span>
+                      <span className="font-medium">₹0</span>
                     </div>
                   </div>
 
@@ -612,7 +612,7 @@ const PaymentPage = () => {
                       )}
                     </div>
                     <div className="text-right">
-                      <span className="text-3xl font-bold text-primary">{total} AED</span>
+                      <span className="text-3xl font-bold text-primary">₹{total.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
 
@@ -630,7 +630,7 @@ const PaymentPage = () => {
                     ) : (
                       <>
                         <Lock className="w-4 h-4 mr-2" />
-                        Pay {total} AED
+                        Pay ₹{total.toLocaleString('en-IN')}
                       </>
                     )}
                   </Button>

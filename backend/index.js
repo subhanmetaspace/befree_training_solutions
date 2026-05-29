@@ -14,10 +14,10 @@ app.use(
   cors({
     origin: (origin, callback) => {
       const allowedOrigins = [
-        "https://befreetraining.net",
+        "https://learnwithdigiweb.com",
+        "https://www.learnwithdigiweb.com",
         "http://localhost:3000",
-        "http://localhost:3001",
-        "https://7125bce4-753c-4e16-b02e-d5bbd340eda3-00-2ojlk0ircnnqe.pike.replit.dev"
+        "http://localhost:5000",
       ];
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -28,29 +28,29 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1/user", userRouter);
-app.use("/api/v1/orders",orderRouter)
-app.use("/api/v1/support", supportRouter)
-app.use("/api/v1/plans",planRouter)
-app.use("/api/v1/notifications",notificationRouter)
+app.use("/api/v1/support", supportRouter);
+app.use("/api/v1/plans", planRouter);
+app.use("/api/v1/notifications", notificationRouter);
 
 app.get("/", (req, res) => {
-  console.log("befree API running");
-  res.send("befree API running");
+  res.send("Digiweb Star API running");
 });
 
 const startServer = async () => {
   try {
     await connectDB();
-    const port = process.env.PORT || 1234;
-    app.listen(port, () => {
-      console.log("Listening at", port);
+    const port = process.env.PORT || 3000;
+    app.listen(port, "0.0.0.0", () => {
+      console.log(`Digiweb Star API listening on port ${port}`);
     });
   } catch (err) {
-    console.error("Failed to connect to DB:", err);
+    console.error("Failed to start server:", err);
+    process.exit(1);
   }
 };
 

@@ -86,10 +86,13 @@ const ForgotPassword = () => {
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-2">
-            <div className="w-12 h-12 rounded-lg bg-gradient-hero flex items-center justify-center">
-              <BookOpen className="w-7 h-7 text-primary-foreground" />
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <BookOpen className="w-7 h-7 text-background" />
             </div>
-            <span className="text-2xl font-bold text-foreground">BeFree</span>
+            <div className="flex flex-col">
+              <span className="text-lg font-bold text-foreground leading-tight">Digiweb Star</span>
+              <span className="text-xs text-primary leading-tight">Solution Pvt Ltd</span>
+            </div>
           </div>
         </div>
 

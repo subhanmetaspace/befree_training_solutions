@@ -91,7 +91,7 @@ const PaymentSuccess = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Amount</span>
-                      <span className="font-semibold">{order?.amount} {order?.currency || "AED"}</span>
+                      <span className="font-semibold">₹{Number(order?.amount || 0).toLocaleString('en-IN')}</span>
                     </div>
                     {order?.cardBrand && (
                       <div className="flex justify-between">

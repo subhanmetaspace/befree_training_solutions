@@ -1,0 +1,42 @@
+/workspace$ git add .
+~/workspace$ git commit -m "Resolve merge conflicts - keep Digiweb Star branding"
+On branch master
+Your branch and 'origin/master' have diverged,
+and have 12 and 8 different commits each, respectively.
+
+nothing to commit, working tree clean
+~/workspace$ git push
+To https://github.com/subhanmetaspace/befree_training_solutions
+ ! [rejected]        master -> master (non-fast-forward)
+error: failed to push some refs to 'https://github.com/subhanmetaspace/befree_training_solutions'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. If you want to integrate the remote changes,
+hint: use 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+~/workspace$ git pull
+Auto-merging package-lock.json
+CONFLICT (content): Merge conflict in package-lock.json
+Auto-merging src/pages/Checkout.jsx
+CONFLICT (content): Merge conflict in src/pages/Checkout.jsx
+Auto-merging src/pages/Contact.jsx
+CONFLICT (content): Merge conflict in src/pages/Contact.jsx
+Auto-merging src/pages/PaymentPage.jsx
+CONFLICT (content): Merge conflict in src/pages/PaymentPage.jsx
+Auto-merging src/pages/PaymentSuccess.jsx
+CONFLICT (add/add): Merge conflict in src/pages/PaymentSuccess.jsx
+Auto-merging src/pages/TermsOfService.jsx
+CONFLICT (content): Merge conflict in src/pages/TermsOfService.jsx
+Automatic merge failed; fix conflicts and then commit the result.
+~/workspace$ git push
+To https://github.com/subhanmetaspace/befree_training_solutions
+ ! [rejected]        master -> master (non-fast-forward)
+error: failed to push some refs to 'https://github.com/subhanmetaspace/befree_training_solutions'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. If you want to integrate the remote changes,
+hint: use 'git pull' before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+~/workspace$ 
+
+
+
+

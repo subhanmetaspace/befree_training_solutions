@@ -22,8 +22,9 @@ const Notification = sequelize.define(
       allowNull: false,
     },
     type: {
-      type: DataTypes.ENUM("course", "subscription", "achievement"),
+      type: DataTypes.STRING(50),
       allowNull: false,
+      defaultValue: "course",
     },
     read: {
       type: DataTypes.BOOLEAN,
@@ -32,7 +33,7 @@ const Notification = sequelize.define(
   },
   {
     tableName: "notifications",
-    timestamps: true, // adds createdAt and updatedAt
+    timestamps: true,
   }
 );
 

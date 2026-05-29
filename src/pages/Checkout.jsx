@@ -195,7 +195,7 @@ const Checkout = () => {
 
                     <div className="flex flex-col items-end gap-4">
                       <div className="text-right">
-                        <div className="text-3xl font-bold text-primary">{basePrice} AED</div>
+                        <div className="text-3xl font-bold text-primary">₹{basePrice.toLocaleString('en-IN')}</div>
                         <div className="text-sm text-muted-foreground">/month</div>
                       </div>
                       <Button
@@ -275,7 +275,7 @@ const Checkout = () => {
                 <div className="p-6 space-y-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{plan.name} Plan</span>
-                    <span className="font-medium">{basePrice} AED</span>
+                    <span className="font-medium">₹{basePrice.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Quantity</span>
@@ -289,7 +289,7 @@ const Checkout = () => {
                   {billing === "year" && (
                     <div className="flex justify-between text-sm text-green-600 bg-green-50 p-2 rounded-lg">
                       <span>Annual Discount (20%)</span>
-                      <span className="font-medium">-{yearlySavings} AED</span>
+                      <span className="font-medium">-₹{yearlySavings.toLocaleString('en-IN')}</span>
                     </div>
                   )}
 
@@ -303,7 +303,7 @@ const Checkout = () => {
                       )}
                     </div>
                     <div className="text-right">
-                      <span className="text-3xl font-bold text-primary">{total} AED</span>
+                      <span className="text-3xl font-bold text-primary">₹{total.toLocaleString('en-IN')}</span>
                       {billing === "month" && (
                         <p className="text-xs text-muted-foreground">/month</p>
                       )}

@@ -1,11 +1,11 @@
-const {DataTypes} = require("sequelize")
-const {sequelize} = require("../config/db")
+const { DataTypes } = require("sequelize");
+const { sequelize } = require("../config/db");
 
 const ContactUs = sequelize.define(
   "contactus",
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -18,13 +18,13 @@ const ContactUs = sequelize.define(
       allowNull: false,
     },
     subject: {
-      type: DataTypes.STRING(20)
+      type: DataTypes.STRING(20),
     },
     message: {
-      type: DataTypes.STRING(500)
+      type: DataTypes.STRING(500),
     },
     status: {
-      type: DataTypes.ENUM("resolved","pending"),
+      type: DataTypes.STRING(20),
       defaultValue: "pending",
     },
     created_at: {
@@ -40,7 +40,7 @@ const ContactUs = sequelize.define(
   },
   {
     tableName: "contactus",
-    timestamps: false, 
+    timestamps: false,
   }
 );
 
